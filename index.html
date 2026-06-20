@@ -1065,6 +1065,10 @@
       <div class="mant-info-label">Última venta registrada</div>
       <div class="mant-info-value" id="mant-ultima-venta" style="font-size:0.95rem">—</div>
     </div>
+    <div style="margin-top:14px;display:flex;align-items:center;gap:12px">
+      <button class="btn-mant exportar" onclick="forzarSync()">☁️ Forzar sincronización con nube</button>
+      <span id="sync-status-mant" style="font-size:0.82rem;color:var(--texto-suave)"></span>
+    </div>
   </div>
 
   <!-- Cierre de período -->
@@ -2092,6 +2096,59 @@ function mostrarModalPeligro(titulo, texto, accion) {
     if (accionPeligroPendiente) accionPeligroPendiente();
   };
   document.getElementById('modal-peligro').classList.add('show');
+}
+
+// ── FORZAR SYNC MANUAL ──
+async function forzarSync() {
+  const statusEl = document.getElementById('sync-status-mant');
+  statusEl.textContent = 'Sincronizando...';
+  statusEl.style.color = 'var(--amarillo)';
+  try {
+    // Subir productos
+    const rowsProd = productos.map(p => ({
+      id: p.id, nombre: p.nombre, cat: p.cat,
+      subcat: p.subcat, precio: p.precio, icono: p.icono || ''
+    }));
+    await sbFetch('productos?on_conflict=id', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates',
+      body: JSON.stringify(rowsProd)
+    });
+
+    // Subir ventas una por una
+    let subidas = 0;
+    for (const v of ventas) {
+      await sbFetch('ventas?on_conflict=id', {
+        method: 'POST',
+        prefer: 'resolution=merge-duplicates',
+        body: JSON.stringify([{
+          id: v.id,
+          fecha: v.fecha,
+          hora: v.hora,
+          fecha_iso: v.fechaISO,
+          items: v.items,
+          subtotal: v.subtotal || v.total,
+          descuento: v.descuento || 0,
+          desc_tipo: v.descTipo || null,
+          desc_pct: v.descPct || null,
+          total: v.total,
+          nota: v.nota || '',
+          pago: v.pago || 'Efectivo'
+        }])
+      });
+      subidas++;
+    }
+
+    setSyncStatus(true);
+    statusEl.textContent = '✅ ' + subidas + ' ventas y ' + productos.length + ' productos sincronizados';
+    statusEl.style.color = 'var(--verde)';
+    showToast('✅ Sincronización completa');
+  } catch(e) {
+    statusEl.textContent = '❌ Error: ' + e.message;
+    statusEl.style.color = 'var(--rojo)';
+    showToast('Error de sincronización', true);
+    console.error(e);
+  }
 }
 
 // ── ARRANCAR ──
