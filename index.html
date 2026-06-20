@@ -827,7 +827,7 @@
 
 <!-- NAV -->
 <nav>
-  <div class="nav-brand"><span>🥐</span> Casa Roll</div>
+  <div class="nav-brand"><span>🥐</span> Casa Roll <span id="sync-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F39C12;margin-left:6px;vertical-align:middle"></span><span id="sync-label" style="font-size:0.7rem;opacity:0.75;margin-left:3px">Conectando...</span></div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('pos')">🧾 Venta</button>
     <button class="nav-tab" onclick="showPage('productos')">📦 Productos</button>
@@ -1140,6 +1140,40 @@
 const STORAGE_PRODUCTOS = 'casaroll_productos';
 const STORAGE_VENTAS = 'casaroll_ventas';
 
+// ── SUPABASE CONFIG ──
+const SB_URL = 'https://ibyfeknrcxesjvrahjqx.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieWZla25yY3hlc2p2cmFoanF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NzA3MDAsImV4cCI6MjA5NzU0NjcwMH0.oRnwZuee_OnkMlVV9TCa0W2jJvDeK9GsxOHrJoca87M';
+
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || '',
+      ...( options.headers || {} )
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Supabase error: ' + err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── SYNC STATUS ──
+let syncOnline = false;
+function setSyncStatus(online) {
+  syncOnline = online;
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  if (!dot) return;
+  dot.style.background = online ? '#40916C' : '#F39C12';
+  label.textContent = online ? 'Sincronizado' : 'Solo local';
+}
+
 const SUBCATS = {
   bebidas: ['Café', 'Matcha', 'Sodas'],
   alimentos: ['Roles', 'Galletas']
@@ -1208,7 +1242,7 @@ function quitarDescuento() {
 }
 
 // ── INIT ──
-function init() {
+async function init() {
   const pGuard = localStorage.getItem(STORAGE_PRODUCTOS);
   const vGuard = localStorage.getItem(STORAGE_VENTAS);
   productos = pGuard ? JSON.parse(pGuard) : getDefaultProductos();
@@ -1217,6 +1251,50 @@ function init() {
   renderPOS();
   renderProductosTable();
   initReportes();
+  setSyncStatus(false);
+
+  try {
+    const prodNube = await sbFetch('productos?select=*&order=id');
+    if (prodNube && prodNube.length > 0) {
+      productos = prodNube.map(p => ({
+        id: p.id, nombre: p.nombre, cat: p.cat,
+        subcat: p.subcat, precio: Number(p.precio), icono: p.icono || ''
+      }));
+      localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(productos));
+      renderPOS();
+      renderProductosTable();
+    } else if (!pGuard) {
+      saveProductos();
+    }
+
+    const ventasNube = await sbFetch('ventas?select=*&order=id');
+    if (ventasNube && ventasNube.length > 0) {
+      const ventasLocal = JSON.parse(localStorage.getItem(STORAGE_VENTAS) || '[]');
+      const idsNube = new Set(ventasNube.map(v => String(v.id)));
+      const faltantes = ventasLocal.filter(v => !idsNube.has(String(v.id)));
+      for (const v of faltantes) { await saveVentaNube(v); }
+      ventas = ventasNube.map(v => ({
+        id: v.id, fecha: v.fecha, hora: v.hora, fechaISO: v.fecha_iso,
+        items: v.items, subtotal: Number(v.subtotal), descuento: Number(v.descuento),
+        descTipo: v.desc_tipo, descPct: v.desc_pct, total: Number(v.total),
+        nota: v.nota, pago: v.pago
+      }));
+      localStorage.setItem(STORAGE_VENTAS, JSON.stringify(ventas));
+    } else {
+      const ventasLocal = JSON.parse(localStorage.getItem(STORAGE_VENTAS) || '[]');
+      if (ventasLocal.length > 0) {
+        for (const v of ventasLocal) { await saveVentaNube(v); }
+        showToast('✅ ' + ventasLocal.length + ' ventas migradas a la nube');
+      }
+    }
+
+    setSyncStatus(true);
+    initReportes();
+
+  } catch(e) {
+    console.warn('Modo offline:', e);
+    setSyncStatus(false);
+  }
 }
 
 function getDefaultProductos() {
@@ -1255,8 +1333,48 @@ function getDefaultProductos() {
   return p;
 }
 
-function saveProductos() { localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(productos)); }
-function saveVentas() { localStorage.setItem(STORAGE_VENTAS, JSON.stringify(ventas)); }
+function saveProductos() {
+  localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(productos));
+  // Sync to cloud: upsert all products
+  if (syncOnline) {
+    const rows = productos.map(p => ({
+      id: p.id, nombre: p.nombre, cat: p.cat, subcat: p.subcat, precio: p.precio, icono: p.icono || ''
+    }));
+    sbFetch('productos?on_conflict=id', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates',
+      body: JSON.stringify(rows)
+    }).catch(e => console.warn('Sync productos error:', e));
+  }
+}
+
+function saveVentas() {
+  localStorage.setItem(STORAGE_VENTAS, JSON.stringify(ventas));
+}
+
+async function saveVentaNube(venta) {
+  if (!syncOnline) return;
+  try {
+    await sbFetch('ventas?on_conflict=id', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates',
+      body: JSON.stringify([{
+        id: venta.id,
+        fecha: venta.fecha,
+        hora: venta.hora,
+        fecha_iso: venta.fechaISO,
+        items: venta.items,
+        subtotal: venta.subtotal || venta.total,
+        descuento: venta.descuento || 0,
+        desc_tipo: venta.descTipo || null,
+        desc_pct: venta.descPct || null,
+        total: venta.total,
+        nota: venta.nota || '',
+        pago: venta.pago || 'Efectivo'
+      }])
+    });
+  } catch(e) { console.warn('Sync venta error:', e); }
+}
 
 // ══════════════════════════════════════════
 // NAVEGACIÓN
@@ -1446,6 +1564,7 @@ function confirmarCobro() {
   };
   ventas.push(venta);
   saveVentas();
+  saveVentaNube(venta);
   closeModal('modal-cobro');
   limpiarCarrito();
   const iconos = { Efectivo: '💵', Tarjeta: '💳', Transferencia: '📲' };
@@ -1532,10 +1651,18 @@ function guardarProducto() {
   renderProductGrid();
 }
 
+async function eliminarProductoNube(id) {
+  if (!syncOnline) return;
+  try {
+    await sbFetch('productos?id=eq.' + id, { method: 'DELETE' });
+  } catch(e) { console.warn('Error eliminando producto en nube:', e); }
+}
+
 function eliminarProducto(id) {
   if (!confirm('¿Eliminar este producto?')) return;
   productos = productos.filter(p => p.id !== id);
   saveProductos();
+  eliminarProductoNube(id);
   renderProductosTable();
   renderProductGrid();
   showToast('🗑 Producto eliminado');
@@ -1899,6 +2026,7 @@ function cierreCompleto() {
   setTimeout(() => {
     ventas = [];
     saveVentas();
+    if (syncOnline) sbFetch('ventas?id=gt.0', { method: 'DELETE' }).catch(()=>{});
     cerrarTodasLasSesiones(false);
     renderMantenimiento();
     showToast('✅ Período cerrado y ventas exportadas');
@@ -1912,6 +2040,7 @@ function confirmarLimpiarVentas() {
     () => {
       ventas = [];
       saveVentas();
+      if (syncOnline) sbFetch('ventas?id=gt.0', { method: 'DELETE' }).catch(()=>{});
       cerrarTodasLasSesiones(false);
       renderMantenimiento();
       showToast('✅ Historial de ventas limpiado');
