@@ -2918,7 +2918,7 @@ function applyPrintWidth(mm) {
   }
   var useful   = mm === 58 ? '52mm'  : '76mm';
   var ticketW  = mm === 58 ? '210px' : '300px';
-  var base     = mm === 58 ? 16 : 18;  // px base +4 sobre original
+  var base     = mm === 58 ? 18 : 20;  // +2 sobre anterior
   var pageSize = mm + 'mm';
   var css = [
     '@media print {',
@@ -2933,18 +2933,19 @@ function applyPrintWidth(mm) {
     '    font-size: ' + base + 'px !important;',
     '    padding: 2mm 3mm !important;',
     '    margin: 0 !important;',
-    '    line-height: 1.5 !important;',
+    '    line-height: 1.6 !important;',
     '  }',
     '  #ticket-print .t-logo    { font-size: ' + (base+4) + 'px !important; font-weight:900 !important; }',
+    '  #ticket-print .t-sub     { font-size: ' + base + 'px !important; font-weight:900 !important; }',
     '  #ticket-print .t-folio   { font-size: ' + (base+2) + 'px !important; font-weight:900 !important; }',
     '  #ticket-print .t-cliente { font-size: ' + (base+2) + 'px !important; font-weight:900 !important; }',
-    '  #ticket-print .t-meta    { font-size: ' + (base-2) + 'px !important; }',
+    '  #ticket-print .t-meta    { font-size: ' + base + 'px !important; font-weight:900 !important; }',
     '  #ticket-print .t-item-row { font-size: ' + base + 'px !important; font-weight:600 !important; }',
-    '  #ticket-print .t-total-row { font-size: ' + base + 'px !important; }',
+    '  #ticket-print .t-total-row { font-size: ' + base + 'px !important; font-weight:900 !important; }',
     '  #ticket-print .t-total-final { font-size: ' + (base+4) + 'px !important; font-weight:900 !important; }',
-    '  #ticket-print .t-pago    { font-size: ' + base + 'px !important; font-weight:700 !important; }',
-    '  #ticket-print .t-nota    { font-size: ' + (base-2) + 'px !important; }',
-    '  #ticket-print .t-footer  { font-size: ' + (base-4) + 'px !important; }',
+    '  #ticket-print .t-pago    { font-size: ' + base + 'px !important; font-weight:900 !important; }',
+    '  #ticket-print .t-nota    { font-size: ' + base + 'px !important; font-weight:900 !important; }',
+    '  #ticket-print .t-footer  { font-size: ' + base + 'px !important; font-weight:900 !important; }',
     '}',
     '#ticket-print { width: ' + ticketW + '; font-size: ' + base + 'px; }'
   ].join('\n');
@@ -3048,12 +3049,4 @@ async function forzarSync() {
 // ── ARRANCAR ──
 window.showPage = showPage_orig;
 
-// Esperar a que el DOM esté listo antes de verificar auth
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', checkAuth);
-} else {
-  checkAuth();
-}
-</script>
-</body>
-</html>
+// Esperar a que
