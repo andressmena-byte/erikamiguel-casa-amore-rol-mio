@@ -868,24 +868,7 @@
   .btn-meta-guardar:hover { background: var(--verde-claro); }
 
   /* Ticket de impresión */
-  @media print {
-    * { visibility: hidden; }
-    #ticket-print, #ticket-print * { visibility: visible; }
-    #ticket-print {
-      display: block !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 76mm !important;
-      margin: 0 !important;
-      padding: 2mm 3mm !important;
-      font-size: 14px !important;
-    }
-    @page {
-      size: 80mm auto;
-      margin: 0mm;
-    }
-  }
+  /* @media print handled dynamically by applyPrintWidth() */
   #ticket-print {
     display: none;
     font-family: 'Courier New', monospace;
@@ -1950,8 +1933,7 @@ function imprimirTicket() {
   const ultima = ventas[ventas.length - 1];
   if (!ultima) return;
   prepararTicket(ultima);
-  // Pequeño delay para que el DOM se actualice antes de imprimir
-  setTimeout(() => window.print(), 100);
+  setTimeout(function() { window.print(); }, 150);
 }
 
 function verTicket() {
@@ -2934,21 +2916,28 @@ function applyPrintWidth(mm) {
     style.id = 'print-style-dynamic';
     document.head.appendChild(style);
   }
-  // 58mm: útil ~54mm, font 12px | 80mm: útil ~76mm, font 14px
-  const useful = mm === 58 ? '52mm' : '76mm';
-  const ticketWidth = mm === 58 ? '210px' : '300px';
-  const fontSize = mm === 58 ? '12px' : '14px';
-  style.textContent = `
-    @media print {
-      @page { size: ${mm}mm auto; margin: 0mm; }
-      #ticket-print {
-        width: ${useful} !important;
-        font-size: ${fontSize} !important;
-        padding: 2mm 3mm !important;
-      }
-    }
-    #ticket-print { width: ${ticketWidth}; font-size: ${fontSize}; }
-  `;
+  var useful    = mm === 58 ? '52mm'  : '76mm';
+  var ticketW   = mm === 58 ? '210px' : '300px';
+  var fontSize  = mm === 58 ? '12px'  : '14px';
+  var pageSize  = mm + 'mm';
+  var css = [
+    '@media print {',
+    '  * { visibility: hidden; }',
+    '  #ticket-print, #ticket-print * { visibility: visible; }',
+    '  @page { size: ' + pageSize + ' auto; margin: 0mm; }',
+    '  #ticket-print {',
+    '    display: block !important;',
+    '    position: fixed !important;',
+    '    top: 0 !important; left: 0 !important;',
+    '    width: ' + useful + ' !important;',
+    '    font-size: ' + fontSize + ' !important;',
+    '    padding: 2mm 3mm !important;',
+    '    margin: 0 !important;',
+    '  }',
+    '}',
+    '#ticket-print { width: ' + ticketW + '; font-size: ' + fontSize + '; }'
+  ].join('\n');
+  style.textContent = css;
 }
 
 function ticketPruebaData() {
@@ -2973,7 +2962,7 @@ function ticketPruebaData() {
 
 function imprimirTicketPrueba() {
   prepararTicket(ticketPruebaData());
-  setTimeout(() => window.print(), 100);
+  setTimeout(function() { window.print(); }, 150);
 }
 
 function verTicketPrueba() {
@@ -3045,4 +3034,15 @@ async function forzarSync() {
   }
 }
 
-// ── ARRANCA
+// ── ARRANCAR ──
+window.showPage = showPage_orig;
+
+// Esperar a que el DOM esté listo antes de verificar auth
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkAuth);
+} else {
+  checkAuth();
+}
+</script>
+</body>
+</html>
