@@ -1339,9 +1339,8 @@ function setSyncStatus(online) {
   syncOnline = online;
   const dot = document.getElementById('sync-dot');
   const label = document.getElementById('sync-label');
-  if (!dot) return;
-  dot.style.background = online ? '#40916C' : '#F39C12';
-  label.textContent = online ? 'Sincronizado' : 'Solo local';
+  if (dot) dot.style.background = online ? '#40916C' : '#F39C12';
+  if (label) label.textContent = online ? 'Sincronizado' : 'Solo local';
 }
 
 // GRUPOS DINÁMICOS — se calculan desde los productos
@@ -1484,8 +1483,12 @@ async function init() {
     initReportes();
 
   } catch(e) {
-    console.warn('Modo offline:', e);
+    console.warn('Error Supabase:', e);
     setSyncStatus(false);
+    // Aunque falle la nube, mostrar datos locales
+    renderPOS();
+    renderProductosTable();
+    initReportes();
   }
 }
 
@@ -2314,6 +2317,8 @@ function doLogin() {
   const pwd = document.getElementById('login-pwd').value;
   const errEl = document.getElementById('login-error');
   const inputEl = document.getElementById('login-pwd');
+  errEl.style.color = 'var(--verde)';
+  errEl.textContent = 'Verificando...';
   if (hashSimple(pwd) !== hashSimple('C@s@roll')) {
     errEl.textContent = 'Contraseña incorrecta';
     inputEl.classList.add('error');
@@ -2333,8 +2338,16 @@ function doLogin() {
 }
 
 function checkAuth() {
+  // Reset sync status visually
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  if (dot) dot.style.background = '#F39C12';
+  if (label) label.textContent = 'Conectando...';
+
   if (!estaAutenticado()) {
-    document.getElementById('login-screen').classList.add('show');
+    // Mostrar login
+    const ls = document.getElementById('login-screen');
+    if (ls) ls.classList.add('show');
   } else {
     init();
   }
@@ -2583,21 +2596,4 @@ async function guardarEdicionVenta() {
 
   if (evDescTipo !== 'ninguno') {
     const val = parseFloat(document.getElementById('ev-desc-valor').value) || 0;
-    descMonto = evDescTipo === 'pct' ? Math.round(subtotal * val / 100) : val;
-    if (descMonto > subtotal) descMonto = subtotal;
-    descTipoVal = evDescTipo;
-    descPct = evDescTipo === 'pct' ? val : null;
-  }
-
-  const nuevoTotal = redondear(subtotal - descMonto);
-
-  // Actualizar en memoria
-  const idx = ventas.findIndex(x => x.id === editingVentaId);
-  ventas[idx] = {
-    ...v,
-    pago: nuevoPago,
-    nota: nuevaNota,
-    descuento: descMonto,
-    descTipo: descTipoVal,
-    descPct: descPct,
-    total: 
+    descMonto = evDescTipo === 'pct' 
