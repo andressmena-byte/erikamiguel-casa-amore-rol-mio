@@ -808,6 +808,33 @@
   .modal.peligro h3 { color: var(--rojo); }
   .btn-peligro-confirmar { background: var(--rojo) !important; }
 
+  /* Ticket de impresión */
+  @media print {
+    body > *:not(#ticket-print) { display: none !important; }
+    #ticket-print { display: block !important; }
+  }
+  #ticket-print {
+    display: none;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    width: 280px;
+    margin: 0 auto;
+    padding: 10px;
+    color: #000;
+  }
+  #ticket-print .t-logo { text-align:center; font-size:16px; font-weight:bold; margin-bottom:2px; }
+  #ticket-print .t-sub { text-align:center; font-size:10px; margin-bottom:8px; }
+  #ticket-print .t-folio { text-align:center; font-size:13px; font-weight:bold; margin-bottom:6px; border-top:1px dashed #000; border-bottom:1px dashed #000; padding:4px 0; }
+  #ticket-print .t-meta { font-size:10px; margin-bottom:6px; }
+  #ticket-print .t-items { border-top:1px dashed #000; padding-top:6px; margin-bottom:6px; }
+  #ticket-print .t-item-row { display:flex; justify-content:space-between; margin-bottom:2px; }
+  #ticket-print .t-totales { border-top:1px dashed #000; padding-top:6px; }
+  #ticket-print .t-total-row { display:flex; justify-content:space-between; margin-bottom:2px; }
+  #ticket-print .t-total-final { font-weight:bold; font-size:14px; border-top:1px dashed #000; padding-top:4px; margin-top:4px; }
+  #ticket-print .t-pago { text-align:center; margin-top:6px; font-size:11px; }
+  #ticket-print .t-nota { text-align:center; font-size:10px; margin-top:4px; font-style:italic; }
+  #ticket-print .t-footer { text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #000; padding-top:6px; }
+
 </style>
 </head>
 <body>
@@ -832,6 +859,7 @@
     <button class="nav-tab active" onclick="showPage('pos')">🧾 Venta</button>
     <button class="nav-tab" onclick="showPage('productos')">📦 Productos</button>
     <button class="nav-tab" onclick="showPage('reportes')">📊 Reportes</button>
+    <button class="nav-tab" onclick="showPage('ventas')">🎫 Ventas</button>
     <button class="nav-tab" onclick="showPage('mantenimiento')">🔧 Mant.</button>
   </div>
 </nav>
@@ -851,7 +879,7 @@
 
     <!-- Carrito -->
     <div class="cart-panel">
-      <div class="cart-header">🛒 Orden actual</div>
+      <div class="cart-header" style="justify-content:space-between">🛒 Orden actual <span id="cart-folio-preview" style="font-size:0.75rem;background:var(--verde-suave);color:var(--verde);padding:3px 10px;border-radius:10px;font-weight:700"></span></div>
       <div class="cart-items" id="cart-items">
         <div class="cart-empty">Agrega productos para comenzar</div>
       </div>
@@ -888,6 +916,7 @@
           <span class="cart-total-amount" id="cart-total">$0</span>
         </div>
         <button class="btn-cobrar" id="btn-cobrar" onclick="cobrar()" disabled>Cobrar</button>
+        <button class="btn-cobrar" id="btn-imprimir" onclick="imprimirTicket()" disabled style="background:transparent;color:var(--verde);border:2px solid var(--verde);margin-top:6px;font-size:0.85rem;padding:9px">🖨 Imprimir ticket</button>
         <button class="btn-limpiar" onclick="limpiarCarrito()">✕ Limpiar orden</button>
       </div>
     </div>
@@ -922,15 +951,17 @@
           <input type="text" id="f-nombre" placeholder="Ej. Latte de vainilla">
         </div>
         <div class="form-group">
-          <label>Categoría</label>
+          <label>Categoría principal</label>
           <select id="f-cat" onchange="updateSubcatSelect()">
-            <option value="bebidas">Bebidas</option>
-            <option value="alimentos">Alimentos</option>
+            <option value="bebidas">☕ Bebidas</option>
+            <option value="alimentos">🥐 Alimentos</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Subcategoría</label>
-          <select id="f-subcat"></select>
+          <label>Grupo <span style="font-size:0.75rem;font-weight:400;color:var(--texto-suave)">(selecciona o escribe uno nuevo)</span></label>
+          <select id="f-subcat" onchange="onSubcatChange()"></select>
+          <input type="text" id="f-subcat-nuevo" placeholder="Nombre del nuevo grupo..."
+            style="display:none;margin-top:6px;width:100%;padding:10px 12px;border:1.5px solid var(--verde-claro);border-radius:9px;font-size:0.92rem;font-family:inherit;background:var(--blanco)">
         </div>
         <div class="form-group">
           <label>Precio ($)</label>
@@ -957,12 +988,32 @@
       <input type="date" id="r-desde">
     </div>
     <div class="form-group">
+      <label>Hora inicio</label>
+      <input type="time" id="r-hora-desde" style="width:120px">
+    </div>
+    <div class="form-group">
       <label>Hasta</label>
       <input type="date" id="r-hasta">
     </div>
+    <div class="form-group">
+      <label>Hora fin</label>
+      <input type="time" id="r-hora-hasta" style="width:120px" value="23:59">
+    </div>
     <button class="btn-filtrar" onclick="filtrarReporte()">Filtrar</button>
-    <button class="btn-exportar" onclick="exportarExcel()">⬇ Exportar Excel</button>
+    <button class="btn-exportar" onclick="exportarExcel()">⬇ Excel</button>
     <button class="btn-exportar" onclick="exportarCSV()" style="border-color:var(--texto-suave);color:var(--texto-suave)">⬇ CSV</button>
+  </div>
+  <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:0.8rem;color:var(--texto-suave)">🕐 Zona horaria detectada: <strong id="tz-label"></strong></span>
+    <select id="tz-select" onchange="saveTZ()" style="font-size:0.8rem;padding:4px 8px;border-radius:6px;border:1.5px solid var(--crema-oscuro);background:var(--crema)">
+      <option value="America/Merida">América/Mérida (CST)</option>
+      <option value="America/Mexico_City">América/Ciudad de México (CST)</option>
+      <option value="America/Monterrey">América/Monterrey (CST)</option>
+      <option value="America/Tijuana">América/Tijuana (PST)</option>
+      <option value="America/Cancun">América/Cancún (EST)</option>
+      <option value="America/Chicago">América/Chicago (CST)</option>
+      <option value="America/New_York">América/Nueva York (EST)</option>
+    </select>
   </div>
 
   <div class="kpi-grid" id="kpi-grid">
@@ -1023,7 +1074,7 @@
     <table class="ventas-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th>Folio</th>
           <th>Fecha</th>
           <th>Hora</th>
           <th>Productos</th>
@@ -1038,6 +1089,90 @@
   </div>
 </div>
 
+
+<!-- ═══════════ VENTAS ═══════════ -->
+<div id="page-ventas" class="page">
+  <div class="page-title" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <span>🎫 Registro de Ventas</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="text" id="ventas-buscar" placeholder="Buscar folio, producto, nota..." 
+        style="padding:8px 12px;border:1.5px solid var(--crema-oscuro);border-radius:8px;font-size:0.85rem;font-family:inherit;background:var(--crema);width:220px"
+        oninput="renderVentasList()">
+      <select id="ventas-filtro-pago" onchange="renderVentasList()"
+        style="padding:8px 12px;border:1.5px solid var(--crema-oscuro);border-radius:8px;font-size:0.85rem;font-family:inherit;background:var(--crema)">
+        <option value="">Todos los pagos</option>
+        <option value="Efectivo">💵 Efectivo</option>
+        <option value="Tarjeta">💳 Tarjeta</option>
+        <option value="Transferencia">📲 Transferencia</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="ventas-table-wrap">
+    <table class="ventas-table">
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Productos</th>
+          <th>Pago</th>
+          <th>Descuento</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="ventas-list-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal editar venta -->
+<div class="modal-overlay" id="modal-editar-venta">
+  <div class="modal" style="max-width:520px;width:94%">
+    <h3>✏️ Editar venta <span id="ev-folio-titulo" style="color:var(--verde-claro)"></span></h3>
+    <p style="margin-bottom:10px;font-size:0.82rem;color:var(--texto-suave)">Puedes editar el método de pago, la nota y aplicar o modificar el descuento. Los productos no se pueden editar — cancela esta venta y registra una nueva si necesitas cambiarlos.</p>
+    
+    <div style="background:var(--crema);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.83rem" id="ev-resumen-items"></div>
+
+    <div class="form-group">
+      <label>Método de pago</label>
+      <select id="ev-pago" style="width:100%;padding:10px 12px;border:1.5px solid var(--crema-oscuro);border-radius:9px;font-size:0.92rem;font-family:inherit;background:var(--crema)">
+        <option value="Efectivo">💵 Efectivo</option>
+        <option value="Tarjeta">💳 Tarjeta</option>
+        <option value="Transferencia">📲 Transferencia</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Tipo de descuento</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="desc-tipo-btn active" id="ev-btn-pct" onclick="setEvDescTipo('pct')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--crema-oscuro);background:var(--crema);font-size:0.82rem;font-weight:700;cursor:pointer">% Porcentaje</button>
+        <button class="desc-tipo-btn" id="ev-btn-monto" onclick="setEvDescTipo('monto')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--crema-oscuro);background:var(--crema);font-size:0.82rem;font-weight:700;cursor:pointer">$ Monto fijo</button>
+        <button onclick="setEvDescTipo('ninguno')" id="ev-btn-ninguno" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--crema-oscuro);background:var(--crema);font-size:0.82rem;font-weight:700;cursor:pointer;color:var(--rojo)">✕ Sin desc.</button>
+      </div>
+      <input type="number" id="ev-desc-valor" placeholder="0" min="0" step="1"
+        style="width:100%;padding:10px 12px;border:1.5px solid var(--crema-oscuro);border-radius:9px;font-size:0.92rem;font-family:inherit;background:var(--crema)">
+      <div id="ev-desc-preview" style="font-size:0.82rem;color:var(--verde);margin-top:6px;font-weight:600"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Nota</label>
+      <input type="text" id="ev-nota" placeholder="Nota de la venta..."
+        style="width:100%;padding:10px 12px;border:1.5px solid var(--crema-oscuro);border-radius:9px;font-size:0.92rem;font-family:inherit;background:var(--crema)">
+    </div>
+
+    <div style="background:var(--verde-suave);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:0.85rem;color:var(--verde);font-weight:600">Total actualizado</span>
+      <span style="font-size:1.3rem;font-weight:800;color:var(--verde)" id="ev-total-preview">$0</span>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn-cancelar-modal" style="flex:1;padding:12px;border-radius:10px;font-weight:700;font-size:0.92rem;cursor:pointer;border:none" onclick="closeModal('modal-editar-venta')">Cancelar</button>
+      <button class="btn-confirmar" style="flex:1;padding:12px;border-radius:10px;font-weight:700;font-size:0.92rem;cursor:pointer;border:none" onclick="guardarEdicionVenta()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════ MANTENIMIENTO ═══════════ -->
 <div id="page-mantenimiento" class="page">
@@ -1136,6 +1271,19 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Ticket de impresión -->
+<div id="ticket-print">
+  <div class="t-logo">🥐 Casa Roll</div>
+  <div class="t-sub">× Amore Mío</div>
+  <div class="t-folio" id="tp-folio">FOLIO #0001</div>
+  <div class="t-meta" id="tp-meta"></div>
+  <div class="t-items" id="tp-items"></div>
+  <div class="t-totales" id="tp-totales"></div>
+  <div class="t-pago" id="tp-pago"></div>
+  <div class="t-nota" id="tp-nota"></div>
+  <div class="t-footer">¡Gracias por tu compra!<br>Casa Roll × Amore Mío</div>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 // DATOS Y ESTADO
@@ -1143,6 +1291,7 @@
 
 const STORAGE_PRODUCTOS = 'casaroll_productos';
 const STORAGE_VENTAS = 'casaroll_ventas';
+const STORAGE_FOLIO = 'casaroll_ultimo_folio';
 
 // ── SUPABASE CONFIG ──
 const SB_URL = 'https://ibyfeknrcxesjvrahjqx.supabase.co';
@@ -1178,7 +1327,8 @@ function setSyncStatus(online) {
   label.textContent = online ? 'Sincronizado' : 'Solo local';
 }
 
-const SUBCATS = {
+// GRUPOS DINÁMICOS — se calculan desde los productos
+const GRUPOS_DEFAULT = {
   bebidas: ['Café', 'Matcha', 'Sodas'],
   alimentos: ['Roles', 'Galletas']
 };
@@ -1187,6 +1337,21 @@ const ICONO_DEFAULT = {
   'Café': '☕', 'Matcha': '🍵', 'Sodas': '🧃',
   'Roles': '🥐', 'Galletas': '🍪'
 };
+
+function getGrupos() {
+  // Calcula grupos/subgrupos dinámicamente desde los productos existentes
+  const grupos = { bebidas: new Set(), alimentos: new Set() };
+  productos.forEach(p => {
+    if (grupos[p.cat]) grupos[p.cat].add(p.subcat);
+  });
+  // Si no hay productos aún, usar defaults
+  if (!grupos.bebidas.size) GRUPOS_DEFAULT.bebidas.forEach(g => grupos.bebidas.add(g));
+  if (!grupos.alimentos.size) GRUPOS_DEFAULT.alimentos.forEach(g => grupos.alimentos.add(g));
+  return { bebidas: [...grupos.bebidas], alimentos: [...grupos.alimentos] };
+}
+
+// Compatibilidad: SUBCATS ahora es dinámico
+Object.defineProperty(window, 'SUBCATS', { get: () => getGrupos() });
 
 let productos = [];
 let ventas = [];
@@ -1292,6 +1457,12 @@ async function init() {
       }
     }
 
+    // Sincronizar último folio
+    const folioNube = await sbFetch('consecutivo?id=eq.1&select=ultimo_folio');
+    if (folioNube && folioNube.length > 0) {
+      localStorage.setItem(STORAGE_FOLIO, folioNube[0].ultimo_folio);
+    }
+
     setSyncStatus(true);
     initReportes();
 
@@ -1364,6 +1535,7 @@ async function saveVentaNube(venta) {
       prefer: 'resolution=merge-duplicates',
       body: JSON.stringify([{
         id: venta.id,
+        folio: venta.folio || null,
         fecha: venta.fecha,
         hora: venta.hora,
         fecha_iso: venta.fechaISO,
@@ -1455,10 +1627,12 @@ function renderCart() {
   const totalEl = document.getElementById('cart-total');
   const cobrarBtn = document.getElementById('btn-cobrar');
 
+  updateFolioPreview();
   if (!carrito.length) {
     container.innerHTML = '<div class="cart-empty">Agrega productos para comenzar</div>';
     totalEl.textContent = '$0';
     cobrarBtn.disabled = true;
+    document.getElementById('btn-imprimir').disabled = true;
     document.getElementById('row-subtotal').style.display = 'none';
     document.getElementById('row-descuento').style.display = 'none';
     descValor = 0;
@@ -1547,16 +1721,77 @@ function cobrar() {
   document.getElementById('modal-cobro').classList.add('show');
 }
 
-function confirmarCobro() {
+// ── FOLIO CONSECUTIVO ──
+async function getSiguienteFolio() {
+  // Intentar obtener folio desde Supabase (atómico, compartido entre dispositivos)
+  if (syncOnline) {
+    try {
+      const res = await sbFetch('rpc/siguiente_folio', { method: 'POST', body: '{}' });
+      if (res) {
+        localStorage.setItem(STORAGE_FOLIO, res);
+        return res;
+      }
+    } catch(e) { console.warn('Folio offline:', e); }
+  }
+  // Offline: usar local
+  const local = parseInt(localStorage.getItem(STORAGE_FOLIO) || '0') + 1;
+  localStorage.setItem(STORAGE_FOLIO, local);
+  return local;
+}
+
+function formatFolio(n) {
+  return '#' + String(n).padStart(4, '0');
+}
+
+function updateFolioPreview() {
+  const ultimo = parseInt(localStorage.getItem(STORAGE_FOLIO) || '0');
+  const el = document.getElementById('cart-folio-preview');
+  if (el && carrito.length > 0) el.textContent = 'Próximo: ' + formatFolio(ultimo + 1);
+  else if (el) el.textContent = '';
+}
+
+// ── IMPRESIÓN ──
+function prepararTicket(venta) {
+  document.getElementById('tp-folio').textContent = 'FOLIO ' + formatFolio(venta.folio || 0);
+  document.getElementById('tp-meta').innerHTML =
+    'Fecha: ' + venta.fecha + '<br>Hora: ' + venta.hora;
+  document.getElementById('tp-items').innerHTML =
+    venta.items.map(i =>
+      `<div class="t-item-row"><span>${i.qty}x ${i.nombre}</span><span>$${i.sub}</span></div>`
+    ).join('');
+  let totalesHTML = '';
+  if (venta.descuento > 0) {
+    totalesHTML += `<div class="t-total-row"><span>Subtotal</span><span>$${venta.subtotal}</span></div>`;
+    totalesHTML += `<div class="t-total-row"><span>Descuento</span><span>-$${venta.descuento}</span></div>`;
+  }
+  totalesHTML += `<div class="t-total-row t-total-final"><span>TOTAL</span><span>$${venta.total}</span></div>`;
+  document.getElementById('tp-totales').innerHTML = totalesHTML;
+  const iconos = { Efectivo: '💵', Tarjeta: '💳', Transferencia: '📲' };
+  document.getElementById('tp-pago').textContent =
+    (iconos[venta.pago] || '') + ' Pago: ' + (venta.pago || 'Efectivo');
+  document.getElementById('tp-nota').textContent = venta.nota ? 'Nota: ' + venta.nota : '';
+}
+
+function imprimirTicket() {
+  const ultima = ventas[ventas.length - 1];
+  if (!ultima) return;
+  prepararTicket(ultima);
+  window.print();
+}
+
+async function confirmarCobro() {
   if (!metodoPago) return;
+  const folio = await getSiguienteFolio();
   const now = new Date();
+  const tz = getTZ();
   const subtotal = carrito.reduce((s, i) => s + i.precio * i.qty, 0);
   const total = subtotal - descValor;
   const venta = {
     id: Date.now(),
-    fecha: now.toLocaleDateString('es-MX'),
-    hora: now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-    fechaISO: now.toISOString().split('T')[0],
+    folio,
+    fecha: now.toLocaleDateString('es-MX', { timeZone: tz }),
+    hora: now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz }),
+    fechaISO: now.toLocaleDateString('sv-SE', { timeZone: tz }),
     items: carrito.map(i => ({ nombre: i.nombre, qty: i.qty, precio: i.precio, sub: i.precio * i.qty })),
     subtotal,
     descuento: descValor,
@@ -1570,9 +1805,12 @@ function confirmarCobro() {
   saveVentas();
   saveVentaNube(venta);
   closeModal('modal-cobro');
+  // Preparar ticket y habilitar botón imprimir
+  prepararTicket(venta);
+  document.getElementById('btn-imprimir').disabled = false;
   limpiarCarrito();
   const iconos = { Efectivo: '💵', Tarjeta: '💳', Transferencia: '📲' };
-  showToast(`✅ Cobrado ${iconos[metodoPago]} ${metodoPago} — $${total}`);
+  showToast(`✅ Folio ${formatFolio(folio)} — $${total} ${iconos[metodoPago]}`);
 }
 
 // ══════════════════════════════════════════
@@ -1603,7 +1841,37 @@ function renderProductosTable() {
 function updateSubcatSelect() {
   const cat = document.getElementById('f-cat').value;
   const sel = document.getElementById('f-subcat');
-  sel.innerHTML = SUBCATS[cat].map(sc => `<option value="${sc}">${sc}</option>`).join('');
+  const grupos = getGrupos();
+  const opts = grupos[cat] || [];
+  sel.innerHTML = opts.map(sc => `<option value="${sc}">${sc}</option>`).join('');
+  sel.innerHTML += '<option value="__nuevo__">➕ Crear nuevo grupo...</option>';
+  // Si estamos editando, restaurar valor
+  if (editingId) {
+    const p = productos.find(x => x.id === editingId);
+    if (p && p.subcat) sel.value = opts.includes(p.subcat) ? p.subcat : '__nuevo__';
+  }
+  onSubcatChange();
+}
+
+function onSubcatChange() {
+  const sel = document.getElementById('f-subcat');
+  const nuevoInput = document.getElementById('f-subcat-nuevo');
+  if (sel.value === '__nuevo__') {
+    nuevoInput.style.display = 'block';
+    nuevoInput.focus();
+  } else {
+    nuevoInput.style.display = 'none';
+    nuevoInput.value = '';
+  }
+}
+
+function getSubcatValue() {
+  const sel = document.getElementById('f-subcat');
+  if (sel.value === '__nuevo__') {
+    const nuevo = document.getElementById('f-subcat-nuevo').value.trim();
+    return nuevo || null;
+  }
+  return sel.value;
 }
 
 function editarProducto(id) {
@@ -1632,12 +1900,15 @@ function cancelarForm() {
 function guardarProducto() {
   const nombre = document.getElementById('f-nombre').value.trim();
   const cat = document.getElementById('f-cat').value;
-  const subcat = document.getElementById('f-subcat').value;
+  const subcat = getSubcatValue();
   const precio = parseFloat(document.getElementById('f-precio').value);
   const icono = document.getElementById('f-icono').value.trim() || ICONO_DEFAULT[subcat] || '🍽';
 
   if (!nombre || isNaN(precio) || precio <= 0) {
     showToast('⚠️ Completa nombre y precio válido', true); return;
+  }
+  if (!subcat) {
+    showToast('⚠️ Escribe el nombre del nuevo grupo', true); return;
   }
 
   if (editingId) {
@@ -1676,10 +1947,46 @@ function eliminarProducto(id) {
 // REPORTES
 // ══════════════════════════════════════════
 function initReportes() {
-  const hoy = new Date().toISOString().split('T')[0];
-  const hace30 = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+  const tz = getTZ();
+  const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: tz }); // sv-SE = YYYY-MM-DD
+  const hace30 = new Date(Date.now() - 30 * 86400000).toLocaleDateString('sv-SE', { timeZone: tz });
   document.getElementById('r-desde').value = hace30;
   document.getElementById('r-hasta').value = hoy;
+  const horaHasta = document.getElementById('r-hora-hasta');
+  if (horaHasta && !horaHasta.value) horaHasta.value = '23:59';
+  initTZ();
+}
+
+// ── ZONA HORARIA ──
+const STORAGE_TZ = 'casaroll_tz';
+function getTZ() { return localStorage.getItem(STORAGE_TZ) || 'America/Merida'; }
+function saveTZ() {
+  const tz = document.getElementById('tz-select').value;
+  localStorage.setItem(STORAGE_TZ, tz);
+  document.getElementById('tz-label').textContent = tz;
+  renderReporte();
+}
+function initTZ() {
+  const tz = getTZ();
+  const sel = document.getElementById('tz-select');
+  if (sel) sel.value = tz;
+  const lbl = document.getElementById('tz-label');
+  if (lbl) lbl.textContent = tz;
+}
+
+function parseHoraVenta(v) {
+  // Convierte fecha+hora de venta a objeto comparable
+  // hora viene como "HH:MM" en formato 24h o 12h
+  let hora = v.hora || '00:00';
+  // Normalizar AM/PM si existe
+  if (/AM|PM/i.test(hora)) {
+    const [time, ampm] = hora.split(' ');
+    let [hh, mm] = time.split(':').map(Number);
+    if (/PM/i.test(ampm) && hh !== 12) hh += 12;
+    if (/AM/i.test(ampm) && hh === 12) hh = 0;
+    hora = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+  }
+  return v.fechaISO + 'T' + hora;
 }
 
 function filtrarReporte() { renderReporte(); }
@@ -1687,10 +1994,15 @@ function filtrarReporte() { renderReporte(); }
 function renderReporte() {
   const desde = document.getElementById('r-desde').value;
   const hasta = document.getElementById('r-hasta').value;
+  const horaDesde = document.getElementById('r-hora-desde')?.value || '00:00';
+  const horaHasta = document.getElementById('r-hora-hasta')?.value || '23:59';
 
   ventasFiltered = ventas.filter(v => {
-    if (desde && v.fechaISO < desde) return false;
-    if (hasta && v.fechaISO > hasta) return false;
+    const ventaDateTime = parseHoraVenta(v);
+    const desdeStr = desde ? desde + 'T' + (horaDesde || '00:00') : null;
+    const hastaStr = hasta ? hasta + 'T' + (horaHasta || '23:59') : null;
+    if (desdeStr && ventaDateTime < desdeStr) return false;
+    if (hastaStr && ventaDateTime > hastaStr) return false;
     return true;
   });
 
@@ -1771,7 +2083,7 @@ function renderReporte() {
       : '<span style="color:var(--texto-suave)">—</span>';
     return `
     <tr>
-      <td>${ventasFiltered.length - i}</td>
+      <td><strong>${v.folio ? formatFolio(v.folio) : '—'}</strong></td>
       <td>${v.fecha}</td>
       <td>${v.hora}</td>
       <td style="font-size:0.8rem">${v.items.map(it => `${it.qty}× ${it.nombre}`).join(', ')}</td>
@@ -1788,10 +2100,10 @@ function renderReporte() {
 // ══════════════════════════════════════════
 function exportarCSV() {
   if (!ventasFiltered.length) { showToast('Sin datos para exportar', true); return; }
-  const rows = [['#','Fecha','Hora','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
+  const rows = [['Folio','Fecha','Hora','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
   ventasFiltered.forEach((v, i) => {
     rows.push([
-      i + 1, v.fecha, v.hora,
+      v.folio ? formatFolio(v.folio) : '—', v.fecha, v.hora,
       v.items.map(x => `${x.qty}x ${x.nombre}`).join(' | '),
       v.nota || '',
       v.pago || 'Efectivo',
@@ -1808,10 +2120,10 @@ function exportarCSV() {
 
 function exportarExcel() {
   if (!ventasFiltered.length) { showToast('Sin datos para exportar', true); return; }
-  const rows = [['#','Fecha','Hora','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
+  const rows = [['Folio','Fecha','Hora','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
   ventasFiltered.forEach((v, i) => {
     rows.push([
-      i + 1, v.fecha, v.hora,
+      v.folio ? formatFolio(v.folio) : '—', v.fecha, v.hora,
       v.items.map(x => `${x.qty}x ${x.nombre}`).join(' | '),
       v.nota || '',
       v.pago || 'Efectivo',
@@ -1991,11 +2303,12 @@ function showPage_orig(p) {
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('page-' + p).classList.add('active');
   const tabs = document.querySelectorAll('.nav-tab');
-  const idx = { pos: 0, productos: 1, reportes: 2, mantenimiento: 3 };
+  const idx = { pos: 0, productos: 1, reportes: 2, ventas: 3, mantenimiento: 4 };
   if (idx[p] !== undefined) tabs[idx[p]].classList.add('active');
   if (p === 'reportes') renderReporte();
   if (p === 'productos') renderProductosTable();
   if (p === 'mantenimiento') renderMantenimiento();
+  if (p === 'ventas') renderVentasList();
 }
 
 function renderMantenimiento() {
@@ -2096,6 +2409,176 @@ function mostrarModalPeligro(titulo, texto, accion) {
     if (accionPeligroPendiente) accionPeligroPendiente();
   };
   document.getElementById('modal-peligro').classList.add('show');
+}
+
+// ══════════════════════════════════════════
+// MÓDULO VENTAS — VISUALIZACIÓN Y EDICIÓN
+// ══════════════════════════════════════════
+function renderVentasList() {
+  const buscar = (document.getElementById('ventas-buscar')?.value || '').toLowerCase();
+  const filtroPago = document.getElementById('ventas-filtro-pago')?.value || '';
+  const tbody = document.getElementById('ventas-list-tbody');
+  if (!tbody) return;
+
+  let lista = [...ventas].reverse();
+  if (buscar) {
+    lista = lista.filter(v =>
+      (v.folio && formatFolio(v.folio).toLowerCase().includes(buscar)) ||
+      v.items.some(i => i.nombre.toLowerCase().includes(buscar)) ||
+      (v.nota && v.nota.toLowerCase().includes(buscar))
+    );
+  }
+  if (filtroPago) lista = lista.filter(v => v.pago === filtroPago);
+
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="emoji">🎫</div>Sin ventas encontradas</div></td></tr>';
+    return;
+  }
+
+  const pagoIcon = { Efectivo: '💵', Tarjeta: '💳', Transferencia: '📲' };
+  tbody.innerHTML = lista.map(v => {
+    const descLabel = v.descuento > 0
+      ? `<span style="color:var(--rojo);font-weight:600">−$${v.descuento}</span>`
+      : '<span style="color:var(--texto-suave)">—</span>';
+    return `<tr>
+      <td><strong>${v.folio ? formatFolio(v.folio) : '—'}</strong></td>
+      <td>${v.fecha}</td>
+      <td>${v.hora}</td>
+      <td style="font-size:0.8rem">${v.items.map(i => i.qty + '× ' + i.nombre).join(', ')}</td>
+      <td><span class="badge-pago ${v.pago || 'Efectivo'}">${pagoIcon[v.pago] || '💵'} ${v.pago || 'Efectivo'}</span></td>
+      <td>${descLabel}</td>
+      <td><strong>$${v.total}</strong></td>
+      <td><button class="btn-edit" onclick="abrirEdicionVenta(${v.id})">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── EDICIÓN DE VENTA ──
+let editingVentaId = null;
+let evDescTipo = 'ninguno';
+
+function abrirEdicionVenta(id) {
+  const v = ventas.find(x => x.id === id);
+  if (!v) return;
+  editingVentaId = id;
+
+  document.getElementById('ev-folio-titulo').textContent = v.folio ? formatFolio(v.folio) : '';
+  document.getElementById('ev-pago').value = v.pago || 'Efectivo';
+  document.getElementById('ev-nota').value = v.nota || '';
+
+  // Resumen de items
+  document.getElementById('ev-resumen-items').innerHTML =
+    v.items.map(i => `<div style="display:flex;justify-content:space-between"><span>${i.qty}× ${i.nombre}</span><span>$${i.sub}</span></div>`).join('') +
+    `<div style="border-top:1px dashed var(--crema-oscuro);margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-weight:700"><span>Subtotal</span><span>$${v.subtotal || v.total}</span></div>`;
+
+  // Descuento actual
+  if (v.descuento > 0) {
+    evDescTipo = v.descTipo || 'monto';
+    document.getElementById('ev-desc-valor').value = evDescTipo === 'pct' ? (v.descPct || '') : v.descuento;
+  } else {
+    evDescTipo = 'ninguno';
+    document.getElementById('ev-desc-valor').value = '';
+  }
+  setEvDescTipo(evDescTipo);
+  actualizarEvPreview();
+
+  // Listener para preview en tiempo real
+  document.getElementById('ev-desc-valor').oninput = actualizarEvPreview;
+
+  document.getElementById('modal-editar-venta').classList.add('show');
+}
+
+function setEvDescTipo(tipo) {
+  evDescTipo = tipo;
+  ['pct','monto','ninguno'].forEach(t => {
+    const btn = document.getElementById('ev-btn-' + t);
+    if (btn) {
+      btn.style.background = t === tipo ? 'var(--verde-suave)' : 'var(--crema)';
+      btn.style.borderColor = t === tipo ? 'var(--verde)' : 'var(--crema-oscuro)';
+      btn.style.color = t === tipo ? 'var(--verde)' : (t === 'ninguno' ? 'var(--rojo)' : 'var(--texto)');
+    }
+  });
+  const input = document.getElementById('ev-desc-valor');
+  if (tipo === 'ninguno') {
+    input.disabled = true;
+    input.value = '';
+    input.style.opacity = '0.4';
+  } else {
+    input.disabled = false;
+    input.style.opacity = '1';
+    input.placeholder = tipo === 'pct' ? 'Ej. 10 (%)' : 'Ej. 50 ($)';
+  }
+  actualizarEvPreview();
+}
+
+function actualizarEvPreview() {
+  const v = ventas.find(x => x.id === editingVentaId);
+  if (!v) return;
+  const subtotal = v.subtotal || v.total;
+  let descMonto = 0;
+  if (evDescTipo !== 'ninguno') {
+    const val = parseFloat(document.getElementById('ev-desc-valor').value) || 0;
+    descMonto = evDescTipo === 'pct' ? Math.round(subtotal * val / 100) : val;
+    if (descMonto > subtotal) descMonto = subtotal;
+  }
+  const total = subtotal - descMonto;
+  document.getElementById('ev-total-preview').textContent = '$' + total;
+  const prev = document.getElementById('ev-desc-preview');
+  prev.textContent = descMonto > 0 ? 'Descuento aplicado: −$' + descMonto : '';
+}
+
+async function guardarEdicionVenta() {
+  const v = ventas.find(x => x.id === editingVentaId);
+  if (!v) return;
+
+  const subtotal = v.subtotal || v.total;
+  const nuevoPago = document.getElementById('ev-pago').value;
+  const nuevaNota = document.getElementById('ev-nota').value.trim();
+  let descMonto = 0, descPct = null, descTipoVal = null;
+
+  if (evDescTipo !== 'ninguno') {
+    const val = parseFloat(document.getElementById('ev-desc-valor').value) || 0;
+    descMonto = evDescTipo === 'pct' ? Math.round(subtotal * val / 100) : val;
+    if (descMonto > subtotal) descMonto = subtotal;
+    descTipoVal = evDescTipo;
+    descPct = evDescTipo === 'pct' ? val : null;
+  }
+
+  const nuevoTotal = subtotal - descMonto;
+
+  // Actualizar en memoria
+  const idx = ventas.findIndex(x => x.id === editingVentaId);
+  ventas[idx] = {
+    ...v,
+    pago: nuevoPago,
+    nota: nuevaNota,
+    descuento: descMonto,
+    descTipo: descTipoVal,
+    descPct: descPct,
+    total: nuevoTotal
+  };
+  saveVentas();
+
+  // Actualizar en Supabase
+  if (syncOnline) {
+    try {
+      await sbFetch('ventas?id=eq.' + editingVentaId, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          pago: nuevoPago,
+          nota: nuevaNota,
+          descuento: descMonto,
+          desc_tipo: descTipoVal,
+          desc_pct: descPct,
+          total: nuevoTotal
+        })
+      });
+    } catch(e) { console.warn('Error actualizando venta en nube:', e); }
+  }
+
+  closeModal('modal-editar-venta');
+  renderVentasList();
+  showToast('✅ Venta ' + (v.folio ? formatFolio(v.folio) : '') + ' actualizada');
 }
 
 // ── FORZAR SYNC MANUAL ──
