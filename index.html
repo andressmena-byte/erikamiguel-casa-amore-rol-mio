@@ -808,32 +808,106 @@
   .modal.peligro h3 { color: var(--rojo); }
   .btn-peligro-confirmar { background: var(--rojo) !important; }
 
+  /* ── META MENSUAL ── */
+  .meta-card {
+    background: var(--blanco); border-radius: var(--radio);
+    box-shadow: var(--sombra); padding: 22px 24px; margin-bottom: 20px;
+  }
+  .meta-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+  }
+  .meta-titulo { font-size: 1rem; font-weight: 700; color: var(--verde); display: flex; align-items: center; gap: 8px; }
+  .meta-periodo-btns { display: flex; gap: 6px; }
+  .meta-periodo-btn {
+    padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+    border: 1.5px solid var(--crema-oscuro); background: var(--crema);
+    cursor: pointer; color: var(--texto-suave); transition: all 0.15s;
+  }
+  .meta-periodo-btn.active { background: var(--verde); color: var(--blanco); border-color: var(--verde); }
+  .meta-numbers {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .meta-actual { font-size: 2rem; font-weight: 800; color: var(--verde); }
+  .meta-slash { font-size: 1.2rem; color: var(--texto-suave); }
+  .meta-objetivo { font-size: 1.2rem; font-weight: 700; color: var(--texto-suave); }
+  .meta-pct { font-size: 0.9rem; font-weight: 700; padding: 3px 10px; border-radius: 10px; margin-left: 6px; }
+  .meta-pct.ok { background: var(--verde-suave); color: var(--verde); }
+  .meta-pct.warn { background: #FEF9EA; color: #B7770D; }
+  .meta-pct.low { background: #FEF0F0; color: var(--rojo); }
+  .progress-track {
+    width: 100%; height: 22px; background: var(--crema-oscuro);
+    border-radius: 12px; overflow: hidden; margin-bottom: 8px;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 12px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+  }
+  .progress-fill.warn { background: linear-gradient(90deg, #F39C12, #F1C40F); }
+  .progress-fill.low { background: linear-gradient(90deg, #E74C3C, #C0392B); }
+  .meta-sub-row {
+    display: flex; justify-content: space-between; font-size: 0.8rem;
+    color: var(--texto-suave); flex-wrap: wrap; gap: 6px;
+  }
+  .meta-edit-row {
+    display: flex; gap: 8px; align-items: center; margin-top: 14px;
+    padding-top: 14px; border-top: 1.5px solid var(--crema-oscuro);
+  }
+  .meta-input {
+    flex: 1; padding: 9px 12px; border: 1.5px solid var(--crema-oscuro);
+    border-radius: 9px; font-size: 0.92rem; font-family: inherit;
+    background: var(--crema); color: var(--texto);
+  }
+  .meta-input:focus { outline: none; border-color: var(--verde-claro); background: var(--blanco); }
+  .btn-meta-guardar {
+    padding: 9px 18px; background: var(--verde); color: var(--blanco);
+    border: none; border-radius: 9px; font-weight: 700; font-size: 0.88rem;
+    cursor: pointer; white-space: nowrap; transition: background 0.15s;
+  }
+  .btn-meta-guardar:hover { background: var(--verde-claro); }
+
   /* Ticket de impresión */
   @media print {
-    body > *:not(#ticket-print) { display: none !important; }
-    #ticket-print { display: block !important; }
+    /* Ocultar absolutamente todo excepto el ticket */
+    * { visibility: hidden; }
+    #ticket-print, #ticket-print * { visibility: visible; }
+    #ticket-print {
+      display: block !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 72mm !important;   /* 80mm rollo - 8mm márgenes = ~72mm útil */
+      margin: 0 !important;
+      padding: 2mm !important;
+    }
+    @page {
+      size: 80mm auto;          /* ancho 80mm, alto automático según contenido */
+      margin: 0;
+    }
   }
   #ticket-print {
     display: none;
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 11px;
     width: 280px;
     margin: 0 auto;
-    padding: 10px;
+    padding: 8px;
     color: #000;
+    line-height: 1.3;
   }
-  #ticket-print .t-logo { text-align:center; font-size:16px; font-weight:bold; margin-bottom:2px; }
-  #ticket-print .t-sub { text-align:center; font-size:10px; margin-bottom:8px; }
-  #ticket-print .t-folio { text-align:center; font-size:13px; font-weight:bold; margin-bottom:6px; border-top:1px dashed #000; border-bottom:1px dashed #000; padding:4px 0; }
-  #ticket-print .t-meta { font-size:10px; margin-bottom:6px; }
-  #ticket-print .t-items { border-top:1px dashed #000; padding-top:6px; margin-bottom:6px; }
-  #ticket-print .t-item-row { display:flex; justify-content:space-between; margin-bottom:2px; }
-  #ticket-print .t-totales { border-top:1px dashed #000; padding-top:6px; }
-  #ticket-print .t-total-row { display:flex; justify-content:space-between; margin-bottom:2px; }
-  #ticket-print .t-total-final { font-weight:bold; font-size:14px; border-top:1px dashed #000; padding-top:4px; margin-top:4px; }
-  #ticket-print .t-pago { text-align:center; margin-top:6px; font-size:11px; }
-  #ticket-print .t-nota { text-align:center; font-size:10px; margin-top:4px; font-style:italic; }
-  #ticket-print .t-footer { text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #000; padding-top:6px; }
+  #ticket-print .t-logo { text-align:center; font-size:14px; font-weight:bold; margin-bottom:1px; }
+  #ticket-print .t-sub { text-align:center; font-size:9px; margin-bottom:6px; }
+  #ticket-print .t-folio { text-align:center; font-size:12px; font-weight:bold; margin-bottom:4px; border-top:1px dashed #000; border-bottom:1px dashed #000; padding:3px 0; }
+  #ticket-print .t-meta { font-size:9px; margin-bottom:4px; line-height:1.4; }
+  #ticket-print .t-items { border-top:1px dashed #000; padding-top:4px; margin-bottom:4px; }
+  #ticket-print .t-item-row { display:flex; justify-content:space-between; margin-bottom:1px; font-size:10px; }
+  #ticket-print .t-totales { border-top:1px dashed #000; padding-top:4px; }
+  #ticket-print .t-total-row { display:flex; justify-content:space-between; margin-bottom:1px; font-size:10px; }
+  #ticket-print .t-total-final { font-weight:bold; font-size:13px; border-top:1px dashed #000; padding-top:3px; margin-top:3px; display:flex; justify-content:space-between; }
+  #ticket-print .t-pago { text-align:center; margin-top:4px; font-size:10px; }
+  #ticket-print .t-nota { text-align:center; font-size:9px; margin-top:3px; font-style:italic; }
+  #ticket-print .t-footer { text-align:center; font-size:8px; margin-top:6px; border-top:1px dashed #000; padding-top:4px; }
 
 </style>
 </head>
@@ -884,6 +958,13 @@
         <div class="cart-empty">Agrega productos para comenzar</div>
       </div>
       <div class="cart-footer">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <span style="font-size:1.1rem">👤</span>
+          <input type="text" id="cliente-nombre" placeholder="Nombre del cliente (opcional)"
+            style="flex:1;padding:8px 11px;border:1.5px solid var(--crema-oscuro);border-radius:9px;font-size:0.88rem;font-family:inherit;background:var(--crema);color:var(--texto);transition:border-color 0.15s"
+            onfocus="this.style.borderColor='var(--verde-claro)';this.style.background='var(--blanco)'"
+            onblur="this.style.borderColor='var(--crema-oscuro)';this.style.background='var(--crema)'">
+        </div>
         <textarea class="nota-campo" id="nota-venta" rows="2" placeholder="Nota (opcional)…"></textarea>
 
         <!-- Descuento -->
@@ -991,6 +1072,38 @@
 <div id="page-reportes" class="page">
   <div class="page-title">📊 Panel de Reportes</div>
 
+  <!-- META MENSUAL -->
+  <div class="meta-card">
+    <div class="meta-header">
+      <div class="meta-titulo">🎯 Meta mensual</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:0.78rem;color:var(--texto-suave);font-weight:600">Período:</span>
+        <div class="meta-periodo-btns">
+          <button class="meta-periodo-btn active" id="meta-btn-calendario" onclick="setMetaPeriodo('calendario')">Mes calendario</button>
+          <button class="meta-periodo-btn" id="meta-btn-naturales" onclick="setMetaPeriodo('naturales')">30 días naturales</button>
+        </div>
+      </div>
+    </div>
+    <div class="meta-numbers">
+      <span class="meta-actual" id="meta-actual">$0</span>
+      <span class="meta-slash">/</span>
+      <span class="meta-objetivo" id="meta-objetivo-label">$0</span>
+      <span class="meta-pct low" id="meta-pct-badge">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill low" id="meta-progress-fill" style="width:0%"></div>
+    </div>
+    <div class="meta-sub-row">
+      <span id="meta-periodo-label">—</span>
+      <span id="meta-faltan-label">—</span>
+    </div>
+    <div class="meta-edit-row">
+      <span style="font-size:0.82rem;font-weight:600;color:var(--texto-suave);white-space:nowrap">Meta ($):</span>
+      <input class="meta-input" type="number" id="meta-input-valor" placeholder="Ej. 15000" min="0" step="100">
+      <button class="btn-meta-guardar" onclick="guardarMeta()">Guardar meta</button>
+    </div>
+  </div>
+
   <div class="reportes-controls">
     <div class="form-group">
       <label>Desde</label>
@@ -1086,6 +1199,7 @@
           <th>Folio</th>
           <th>Fecha</th>
           <th>Hora</th>
+          <th>Cliente</th>
           <th>Productos</th>
           <th>Nota</th>
           <th>Pago</th>
@@ -1124,6 +1238,7 @@
           <th>Folio</th>
           <th>Fecha</th>
           <th>Hora</th>
+          <th>Cliente</th>
           <th>Productos</th>
           <th>Pago</th>
           <th>Descuento</th>
@@ -1209,10 +1324,31 @@
       <div class="mant-info-label">Última venta registrada</div>
       <div class="mant-info-value" id="mant-ultima-venta" style="font-size:0.95rem">—</div>
     </div>
-    <div style="margin-top:14px;display:flex;align-items:center;gap:12px">
+    <div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <button class="btn-mant exportar" onclick="forzarSync()">☁️ Forzar sincronización con nube</button>
       <span id="sync-status-mant" style="font-size:0.82rem;color:var(--texto-suave)"></span>
     </div>
+  </div>
+
+  <!-- Configuración de impresión -->
+  <div class="mant-section">
+    <h3>🖨 Configuración de impresión</h3>
+    <p>Ajusta el ancho del ticket según tu impresora térmica. Haz una impresión de prueba para verificar que se vea bien antes de usarla en ventas.</p>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <span style="font-size:0.85rem;font-weight:600;color:var(--texto-suave)">Ancho del rollo:</span>
+      <div style="display:flex;gap:8px">
+        <button class="meta-periodo-btn" id="print-btn-58" onclick="setPrintWidth(58)">58 mm</button>
+        <button class="meta-periodo-btn active" id="print-btn-80" onclick="setPrintWidth(80)">80 mm</button>
+      </div>
+      <span id="print-width-label" style="font-size:0.8rem;color:var(--texto-suave)">Ancho actual: 80mm</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-mant exportar" onclick="imprimirTicketPrueba()">🖨 Imprimir ticket de prueba</button>
+      <button class="btn-mant" style="border:1.5px solid var(--verde);color:var(--verde);background:transparent" onclick="verTicketPrueba()">👁 Vista previa</button>
+    </div>
+    <p style="margin-top:12px;margin-bottom:0;font-size:0.8rem;color:var(--texto-suave)">
+      💡 <strong>Tip Windows:</strong> Cuando se abra el diálogo de impresión, en "Más opciones" → desactiva "Ajustar a página" y selecciona sin márgenes para mejor resultado.
+    </p>
   </div>
 
   <!-- Cierre de período -->
@@ -1285,6 +1421,7 @@
   <div class="t-logo">🥐 Casa Roll</div>
   <div class="t-sub">× Amore Mío</div>
   <div class="t-folio" id="tp-folio">FOLIO #0001</div>
+  <div class="t-cliente" id="tp-cliente" style="text-align:center;font-size:12px;font-weight:bold;padding:4px 0;display:none">👤 </div>
   <div class="t-meta" id="tp-meta"></div>
   <div class="t-items" id="tp-items"></div>
   <div class="t-totales" id="tp-totales"></div>
@@ -1437,6 +1574,7 @@ async function init() {
   renderProductosTable();
   initReportes();
   setSyncStatus(false);
+  applyPrintWidth(getPrintWidth());
 
   try {
     const prodNube = await sbFetch('productos?select=*&order=id');
@@ -1462,7 +1600,7 @@ async function init() {
         id: v.id, folio: v.folio, fecha: v.fecha, hora: v.hora, fechaISO: v.fecha_iso,
         items: v.items, subtotal: redondear(Number(v.subtotal)), descuento: redondear(Number(v.descuento)),
         descTipo: v.desc_tipo, descPct: v.desc_pct, total: redondear(Number(v.total)),
-        nota: v.nota, pago: v.pago
+        nota: v.nota, cliente: v.cliente || '', pago: v.pago
       }));
       localStorage.setItem(STORAGE_VENTAS, JSON.stringify(ventas));
     } else {
@@ -1566,6 +1704,7 @@ async function saveVentaNube(venta) {
         desc_pct: venta.descPct || null,
         total: venta.total,
         nota: venta.nota || '',
+        cliente: venta.cliente || '',
         pago: venta.pago || 'Efectivo'
       }])
     });
@@ -1582,7 +1721,7 @@ function showPage(p) {
   const tabs = document.querySelectorAll('.nav-tab');
   const idx = { pos: 0, productos: 1, reportes: 2 };
   tabs[idx[p]].classList.add('active');
-  if (p === 'reportes') renderReporte();
+  if (p === 'reportes') { renderReporte(); renderMeta(); }
   if (p === 'productos') renderProductosTable();
 }
 
@@ -1718,6 +1857,7 @@ function limpiarCarrito() {
   carrito = [];
   descValor = 0;
   document.getElementById('nota-venta').value = '';
+  document.getElementById('cliente-nombre').value = '';
   document.getElementById('desc-valor').value = '';
   document.getElementById('desc-body').classList.remove('open');
   document.getElementById('desc-toggle-arrow').textContent = '▾';
@@ -1727,7 +1867,10 @@ function limpiarCarrito() {
 function cobrar() {
   const subtotal = redondear(carrito.reduce((s, i) => s + i.precio * i.qty, 0));
   const total = redondear(subtotal - descValor);
-  let resumen = carrito.map(i => `${i.qty}× ${i.nombre} — $${i.precio * i.qty}`).join('<br>');
+  const clienteNombre = document.getElementById('cliente-nombre').value.trim();
+  let resumen = '';
+  if (clienteNombre) resumen += `<div style="font-weight:700;color:var(--verde);margin-bottom:8px">👤 ${clienteNombre}</div>`;
+  resumen += carrito.map(i => `${i.qty}× ${i.nombre} — $${i.precio * i.qty}`).join('<br>');
   if (descValor > 0) {
     const pct = descTipo === 'pct' ? ` (${Math.round(descValor/subtotal*100)}%)` : '';
     resumen += `<br><span style="color:var(--texto-suave)">Subtotal: $${subtotal}</span>`;
@@ -1773,6 +1916,14 @@ function updateFolioPreview() {
 // ── IMPRESIÓN ──
 function prepararTicket(venta) {
   document.getElementById('tp-folio').textContent = 'FOLIO ' + formatFolio(venta.folio || 0);
+  // Nombre cliente
+  const clienteEl = document.getElementById('tp-cliente');
+  if (venta.cliente) {
+    clienteEl.textContent = '👤 Pedido de ' + venta.cliente;
+    clienteEl.style.display = 'block';
+  } else {
+    clienteEl.style.display = 'none';
+  }
   document.getElementById('tp-meta').innerHTML =
     'Fecha: ' + venta.fecha + '<br>Hora: ' + venta.hora;
   document.getElementById('tp-items').innerHTML =
@@ -1841,6 +1992,7 @@ async function confirmarCobro() {
     descPct: descValor > 0 && descTipo === 'pct' ? Math.round(descValor / subtotal * 100) : null,
     total,
     nota: document.getElementById('nota-venta').value.trim(),
+    cliente: document.getElementById('cliente-nombre').value.trim(),
     pago: metodoPago
   };
   ventas.push(venta);
@@ -2004,6 +2156,105 @@ function initReportes() {
   initTZ();
 }
 
+// ══════════════════════════════════════════
+// META MENSUAL
+// ══════════════════════════════════════════
+const STORAGE_META = 'casaroll_meta';
+const STORAGE_META_PERIODO = 'casaroll_meta_periodo';
+
+function getMeta() { return parseFloat(localStorage.getItem(STORAGE_META) || '0'); }
+function getMetaPeriodo() { return localStorage.getItem(STORAGE_META_PERIODO) || 'calendario'; }
+
+function guardarMeta() {
+  const val = parseFloat(document.getElementById('meta-input-valor').value);
+  if (isNaN(val) || val <= 0) { showToast('⚠️ Ingresa una meta válida', true); return; }
+  localStorage.setItem(STORAGE_META, val);
+  renderMeta();
+  showToast('🎯 Meta guardada: $' + fmt(val));
+}
+
+function setMetaPeriodo(tipo) {
+  localStorage.setItem(STORAGE_META_PERIODO, tipo);
+  document.getElementById('meta-btn-calendario').classList.toggle('active', tipo === 'calendario');
+  document.getElementById('meta-btn-naturales').classList.toggle('active', tipo === 'naturales');
+  renderMeta();
+}
+
+function getVentasPeriodoMeta() {
+  const tz = getTZ();
+  const periodo = getMetaPeriodo();
+  const hoy = new Date();
+
+  let desde, hasta;
+  if (periodo === 'calendario') {
+    // Mes actual: del 1 al último día del mes
+    desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toLocaleDateString('sv-SE', { timeZone: tz });
+    hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toLocaleDateString('sv-SE', { timeZone: tz });
+  } else {
+    // 30 días naturales: hoy - 30 días
+    desde = new Date(Date.now() - 30 * 86400000).toLocaleDateString('sv-SE', { timeZone: tz });
+    hasta = hoy.toLocaleDateString('sv-SE', { timeZone: tz });
+  }
+
+  return {
+    ventas: ventas.filter(v => v.fechaISO >= desde && v.fechaISO <= hasta),
+    desde, hasta
+  };
+}
+
+function renderMeta() {
+  const meta = getMeta();
+  const periodo = getMetaPeriodo();
+  const tz = getTZ();
+  const hoy = new Date();
+
+  // Inicializar input con meta actual
+  const inp = document.getElementById('meta-input-valor');
+  if (inp && !inp.value && meta > 0) inp.value = meta;
+
+  // Calcular ventas del período
+  const { ventas: ventasPeriodo, desde, hasta } = getVentasPeriodoMeta();
+  const totalActual = redondear(ventasPeriodo.reduce((s, v) => s + v.total, 0));
+
+  // Labels de período
+  const desdeLabel = new Date(desde + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  const hastaLabel = new Date(hasta + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  document.getElementById('meta-periodo-label').textContent =
+    (periodo === 'calendario' ? '📅 ' : '🗓 ') + desdeLabel + ' → ' + hastaLabel;
+
+  // Progreso
+  const pct = meta > 0 ? Math.min(Math.round(totalActual / meta * 100), 100) : 0;
+  const falta = meta > 0 ? redondear(Math.max(meta - totalActual, 0)) : 0;
+  const nivel = pct >= 80 ? 'ok' : pct >= 40 ? 'warn' : 'low';
+
+  document.getElementById('meta-actual').textContent = '$' + fmt(totalActual);
+  document.getElementById('meta-objetivo-label').textContent = meta > 0 ? '$' + fmt(meta) : 'sin meta';
+  document.getElementById('meta-pct-badge').textContent = pct + '%';
+  document.getElementById('meta-pct-badge').className = 'meta-pct ' + nivel;
+
+  const fill = document.getElementById('meta-progress-fill');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-fill ' + nivel;
+
+  // Días restantes
+  if (periodo === 'calendario') {
+    const diasMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+    const diaActual = hoy.getDate();
+    const diasRestantes = diasMes - diaActual;
+    document.getElementById('meta-faltan-label').textContent =
+      falta > 0
+        ? `Faltan $${fmt(falta)} — ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''} restante${diasRestantes !== 1 ? 's' : ''}`
+        : '✅ ¡Meta alcanzada!';
+  } else {
+    document.getElementById('meta-faltan-label').textContent =
+      falta > 0 ? `Faltan $${fmt(falta)} para la meta` : '✅ ¡Meta alcanzada!';
+  }
+
+  // Actualizar botones de período
+  document.getElementById('meta-btn-calendario').classList.toggle('active', periodo === 'calendario');
+  document.getElementById('meta-btn-naturales').classList.toggle('active', periodo === 'naturales');
+}
+
 // ── ZONA HORARIA ──
 const STORAGE_TZ = 'casaroll_tz';
 function getTZ() { return localStorage.getItem(STORAGE_TZ) || 'America/Merida'; }
@@ -2043,6 +2294,7 @@ function parseHoraVenta(v) {
 function filtrarReporte() { renderReporte(); }
 
 function renderReporte() {
+  renderMeta();
   const desde = document.getElementById('r-desde').value;
   const hasta = document.getElementById('r-hasta').value;
   const horaDesde = document.getElementById('r-hora-desde')?.value || '00:00';
@@ -2142,6 +2394,7 @@ function renderReporte() {
       <td><strong>${v.folio ? formatFolio(v.folio) : '—'}</strong></td>
       <td>${v.fecha}</td>
       <td>${v.hora}</td>
+      <td style="font-size:0.8rem">${v.cliente ? '<span style="font-weight:600;color:var(--verde)">👤 ' + v.cliente + '</span>' : '<span style="color:var(--texto-suave)">—</span>'}</td>
       <td style="font-size:0.8rem">${v.items.map(it => `${it.qty}× ${it.nombre}`).join(', ')}</td>
       <td style="font-size:0.8rem;color:var(--texto-suave)">${v.nota || '—'}</td>
       <td><span class="badge-pago ${v.pago || 'Efectivo'}">${pagoIcon[v.pago] || '💵'} ${v.pago || 'Efectivo'}</span></td>
@@ -2156,10 +2409,11 @@ function renderReporte() {
 // ══════════════════════════════════════════
 function exportarCSV() {
   if (!ventasFiltered.length) { showToast('Sin datos para exportar', true); return; }
-  const rows = [['Folio','Fecha','Hora','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
+  const rows = [['Folio','Fecha','Hora','Cliente','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
   ventasFiltered.forEach((v, i) => {
     rows.push([
       v.folio ? formatFolio(v.folio) : '—', v.fecha, v.hora,
+      v.cliente || '—',
       v.items.map(x => `${x.qty}x ${x.nombre}`).join(' | '),
       v.nota || '',
       v.pago || 'Efectivo',
@@ -2176,10 +2430,11 @@ function exportarCSV() {
 
 function exportarExcel() {
   if (!ventasFiltered.length) { showToast('Sin datos para exportar', true); return; }
-  const rows = [['Folio','Fecha','Hora','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
+  const rows = [['Folio','Fecha','Hora','Cliente','Productos','Nota','Método de pago','Subtotal','Descuento','Total']];
   ventasFiltered.forEach((v, i) => {
     rows.push([
       v.folio ? formatFolio(v.folio) : '—', v.fecha, v.hora,
+      v.cliente || '—',
       v.items.map(x => `${x.qty}x ${x.nombre}`).join(' | '),
       v.nota || '',
       v.pago || 'Efectivo',
@@ -2371,13 +2626,14 @@ function showPage_orig(p) {
   const tabs = document.querySelectorAll('.nav-tab');
   const idx = { pos: 0, productos: 1, reportes: 2, ventas: 3, mantenimiento: 4 };
   if (idx[p] !== undefined) tabs[idx[p]].classList.add('active');
-  if (p === 'reportes') renderReporte();
+  if (p === 'reportes') { renderReporte(); renderMeta(); }
   if (p === 'productos') renderProductosTable();
   if (p === 'mantenimiento') renderMantenimiento();
   if (p === 'ventas') renderVentasList();
 }
 
 function renderMantenimiento() {
+  initPrintConfig();
   document.getElementById('mant-total-ventas').textContent = ventas.length;
   document.getElementById('mant-total-ingresos').textContent = '$' + ventas.reduce((s,v) => s+v.total, 0);
   document.getElementById('mant-total-productos').textContent = productos.length;
@@ -2510,6 +2766,7 @@ function renderVentasList() {
       <td><strong>${v.folio ? formatFolio(v.folio) : '—'}</strong></td>
       <td>${v.fecha}</td>
       <td>${v.hora}</td>
+      <td style="font-size:0.8rem;font-weight:600;color:var(--verde)">${v.cliente || '—'}</td>
       <td style="font-size:0.8rem">${v.items.map(i => i.qty + '× ' + i.nombre).join(', ')}</td>
       <td><span class="badge-pago ${v.pago || 'Efectivo'}">${pagoIcon[v.pago] || '💵'} ${v.pago || 'Efectivo'}</span></td>
       <td>${descLabel}</td>
@@ -2645,6 +2902,89 @@ async function guardarEdicionVenta() {
   closeModal('modal-editar-venta');
   renderVentasList();
   showToast('✅ Venta ' + (v.folio ? formatFolio(v.folio) : '') + ' actualizada');
+}
+
+// ══════════════════════════════════════════
+// CONFIGURACIÓN DE IMPRESIÓN
+// ══════════════════════════════════════════
+const STORAGE_PRINT_WIDTH = 'casaroll_print_width';
+
+function getPrintWidth() {
+  return parseInt(localStorage.getItem(STORAGE_PRINT_WIDTH) || '80');
+}
+
+function setPrintWidth(mm) {
+  localStorage.setItem(STORAGE_PRINT_WIDTH, mm);
+  // Actualizar CSS dinámico
+  applyPrintWidth(mm);
+  // Actualizar botones
+  document.getElementById('print-btn-58').classList.toggle('active', mm === 58);
+  document.getElementById('print-btn-80').classList.toggle('active', mm === 80);
+  document.getElementById('print-width-label').textContent = 'Ancho actual: ' + mm + 'mm';
+  showToast('🖨 Ancho de ticket: ' + mm + 'mm');
+}
+
+function applyPrintWidth(mm) {
+  // Inyectar/actualizar regla @page dinámica
+  let style = document.getElementById('print-style-dynamic');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'print-style-dynamic';
+    document.head.appendChild(style);
+  }
+  const useful = mm === 58 ? '54mm' : '72mm';
+  const ticketWidth = mm === 58 ? '200px' : '280px';
+  style.textContent = `
+    @media print {
+      @page { size: ${mm}mm auto; margin: 0; }
+      #ticket-print {
+        width: ${useful} !important;
+        font-size: ${mm === 58 ? '9px' : '11px'} !important;
+      }
+    }
+    #ticket-print { width: ${ticketWidth}; }
+  `;
+}
+
+function ticketPruebaData() {
+  return {
+    folio: 1,
+    fecha: new Date().toLocaleDateString('es-MX'),
+    hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    items: [
+      { nombre: 'Latte caliente', qty: 1, sub: 70 },
+      { nombre: 'Rol Tradicional', qty: 2, sub: 140 },
+      { nombre: 'Galleta Chispas', qty: 1, sub: 40 }
+    ],
+    subtotal: 250,
+    descuento: 25,
+    descTipo: 'pct',
+    descPct: 10,
+    total: 225,
+    nota: 'Ticket de prueba',
+    pago: 'Tarjeta'
+  };
+}
+
+function imprimirTicketPrueba() {
+  prepararTicket(ticketPruebaData());
+  setTimeout(() => window.print(), 100);
+}
+
+function verTicketPrueba() {
+  prepararTicket(ticketPruebaData());
+  verTicket();
+}
+
+function initPrintConfig() {
+  const mm = getPrintWidth();
+  applyPrintWidth(mm);
+  const btn58 = document.getElementById('print-btn-58');
+  const btn80 = document.getElementById('print-btn-80');
+  const lbl = document.getElementById('print-width-label');
+  if (btn58) btn58.classList.toggle('active', mm === 58);
+  if (btn80) btn80.classList.toggle('active', mm === 80);
+  if (lbl) lbl.textContent = 'Ancho actual: ' + mm + 'mm';
 }
 
 // ── FORZAR SYNC MANUAL ──
