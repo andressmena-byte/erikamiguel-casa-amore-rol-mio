@@ -1992,12 +1992,15 @@ function eliminarProducto(id) {
 // ══════════════════════════════════════════
 function initReportes() {
   const tz = getTZ();
-  const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: tz }); // sv-SE = YYYY-MM-DD
+  const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: tz });
   const hace30 = new Date(Date.now() - 30 * 86400000).toLocaleDateString('sv-SE', { timeZone: tz });
   document.getElementById('r-desde').value = hace30;
   document.getElementById('r-hasta').value = hoy;
+  // Siempre forzar 00:00 → 23:59 como rango completo del día
+  const horaDesde = document.getElementById('r-hora-desde');
   const horaHasta = document.getElementById('r-hora-hasta');
-  if (horaHasta && !horaHasta.value) horaHasta.value = '23:59';
+  if (horaDesde) horaDesde.value = '00:00';
+  if (horaHasta) horaHasta.value = '23:59';
   initTZ();
 }
 
@@ -2047,10 +2050,15 @@ function renderReporte() {
 
   ventasFiltered = ventas.filter(v => {
     const ventaDateTime = parseHoraVenta(v);
-    const desdeStr = desde ? desde + 'T' + (horaDesde || '00:00') : null;
-    const hastaStr = hasta ? hasta + 'T' + (horaHasta || '23:59') : null;
-    if (desdeStr && ventaDateTime < desdeStr) return false;
-    if (hastaStr && ventaDateTime > hastaStr) return false;
+    // Solo aplicar filtro de hora si hay fecha seleccionada
+    if (desde) {
+      const desdeStr = desde + 'T' + horaDesde;
+      if (ventaDateTime < desdeStr) return false;
+    }
+    if (hasta) {
+      const hastaStr = hasta + 'T' + horaHasta;
+      if (ventaDateTime > hastaStr) return false;
+    }
     return true;
   });
 
