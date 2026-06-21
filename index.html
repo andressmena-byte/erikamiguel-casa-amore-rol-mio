@@ -869,7 +869,6 @@
 
   /* Ticket de impresión */
   @media print {
-    /* Ocultar absolutamente todo excepto el ticket */
     * { visibility: hidden; }
     #ticket-print, #ticket-print * { visibility: visible; }
     #ticket-print {
@@ -877,37 +876,41 @@
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 72mm !important;   /* 80mm rollo - 8mm márgenes = ~72mm útil */
+      width: 76mm !important;
       margin: 0 !important;
-      padding: 2mm !important;
+      padding: 2mm 3mm !important;
+      font-size: 14px !important;
     }
     @page {
-      size: 80mm auto;          /* ancho 80mm, alto automático según contenido */
-      margin: 0;
+      size: 80mm auto;
+      margin: 0mm;
     }
   }
   #ticket-print {
     display: none;
     font-family: 'Courier New', monospace;
-    font-size: 11px;
-    width: 280px;
+    font-size: 14px;
+    width: 300px;
     margin: 0 auto;
     padding: 8px;
     color: #000;
-    line-height: 1.3;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  #ticket-print .t-logo { text-align:center; font-size:14px; font-weight:bold; margin-bottom:1px; }
-  #ticket-print .t-sub { text-align:center; font-size:9px; margin-bottom:6px; }
-  #ticket-print .t-folio { text-align:center; font-size:12px; font-weight:bold; margin-bottom:4px; border-top:1px dashed #000; border-bottom:1px dashed #000; padding:3px 0; }
-  #ticket-print .t-meta { font-size:9px; margin-bottom:4px; line-height:1.4; }
-  #ticket-print .t-items { border-top:1px dashed #000; padding-top:4px; margin-bottom:4px; }
-  #ticket-print .t-item-row { display:flex; justify-content:space-between; margin-bottom:1px; font-size:10px; }
-  #ticket-print .t-totales { border-top:1px dashed #000; padding-top:4px; }
-  #ticket-print .t-total-row { display:flex; justify-content:space-between; margin-bottom:1px; font-size:10px; }
-  #ticket-print .t-total-final { font-weight:bold; font-size:13px; border-top:1px dashed #000; padding-top:3px; margin-top:3px; display:flex; justify-content:space-between; }
-  #ticket-print .t-pago { text-align:center; margin-top:4px; font-size:10px; }
-  #ticket-print .t-nota { text-align:center; font-size:9px; margin-top:3px; font-style:italic; }
-  #ticket-print .t-footer { text-align:center; font-size:8px; margin-top:6px; border-top:1px dashed #000; padding-top:4px; }
+  #ticket-print .t-logo { text-align:center; font-size:18px; font-weight:900; margin-bottom:2px; letter-spacing:1px; }
+  #ticket-print .t-sub { text-align:center; font-size:12px; margin-bottom:8px; }
+  #ticket-print .t-folio { text-align:center; font-size:16px; font-weight:900; margin-bottom:5px; border-top:2px dashed #000; border-bottom:2px dashed #000; padding:4px 0; letter-spacing:2px; }
+  #ticket-print .t-cliente { text-align:center; font-size:14px; font-weight:900; padding:4px 0; margin-bottom:2px; }
+  #ticket-print .t-meta { font-size:12px; margin-bottom:5px; line-height:1.6; }
+  #ticket-print .t-items { border-top:2px dashed #000; padding-top:5px; margin-bottom:5px; }
+  #ticket-print .t-item-row { display:flex; justify-content:space-between; margin-bottom:3px; font-size:13px; font-weight:600; }
+  #ticket-print .t-totales { border-top:2px dashed #000; padding-top:5px; }
+  #ticket-print .t-total-row { display:flex; justify-content:space-between; margin-bottom:3px; font-size:13px; }
+  #ticket-print .t-total-final { font-weight:900; font-size:16px; border-top:2px dashed #000; padding-top:4px; margin-top:4px; display:flex; justify-content:space-between; }
+  #ticket-print .t-pago { text-align:center; margin-top:6px; font-size:13px; font-weight:700; }
+  #ticket-print .t-nota { text-align:center; font-size:12px; margin-top:4px; font-style:italic; }
+  #ticket-print .t-footer { text-align:center; font-size:11px; margin-top:8px; border-top:2px dashed #000; padding-top:5px; }
 
 </style>
 </head>
@@ -2925,24 +2928,26 @@ function setPrintWidth(mm) {
 }
 
 function applyPrintWidth(mm) {
-  // Inyectar/actualizar regla @page dinámica
   let style = document.getElementById('print-style-dynamic');
   if (!style) {
     style = document.createElement('style');
     style.id = 'print-style-dynamic';
     document.head.appendChild(style);
   }
-  const useful = mm === 58 ? '54mm' : '72mm';
-  const ticketWidth = mm === 58 ? '200px' : '280px';
+  // 58mm: útil ~54mm, font 12px | 80mm: útil ~76mm, font 14px
+  const useful = mm === 58 ? '52mm' : '76mm';
+  const ticketWidth = mm === 58 ? '210px' : '300px';
+  const fontSize = mm === 58 ? '12px' : '14px';
   style.textContent = `
     @media print {
-      @page { size: ${mm}mm auto; margin: 0; }
+      @page { size: ${mm}mm auto; margin: 0mm; }
       #ticket-print {
         width: ${useful} !important;
-        font-size: ${mm === 58 ? '9px' : '11px'} !important;
+        font-size: ${fontSize} !important;
+        padding: 2mm 3mm !important;
       }
     }
-    #ticket-print { width: ${ticketWidth}; }
+    #ticket-print { width: ${ticketWidth}; font-size: ${fontSize}; }
   `;
 }
 
@@ -3040,15 +3045,4 @@ async function forzarSync() {
   }
 }
 
-// ── ARRANCAR ──
-window.showPage = showPage_orig;
-
-// Esperar a que el DOM esté listo antes de verificar auth
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', checkAuth);
-} else {
-  checkAuth();
-}
-</script>
-</body>
-</html>
+// ── ARRANCA
