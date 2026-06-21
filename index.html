@@ -916,7 +916,16 @@
           <span class="cart-total-amount" id="cart-total">$0</span>
         </div>
         <button class="btn-cobrar" id="btn-cobrar" onclick="cobrar()" disabled>Cobrar</button>
-        <button class="btn-cobrar" id="btn-imprimir" onclick="imprimirTicket()" disabled style="background:transparent;color:var(--verde);border:2px solid var(--verde);margin-top:6px;font-size:0.85rem;padding:9px">🖨 Imprimir ticket</button>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button class="btn-cobrar" id="btn-imprimir" onclick="imprimirTicket()" disabled 
+            style="flex:1;background:transparent;color:var(--verde);border:2px solid var(--verde);font-size:0.85rem;padding:9px">
+            🖨 Imprimir ticket
+          </button>
+          <button onclick="verTicket()" id="btn-ver-ticket" disabled
+            style="padding:9px 12px;background:var(--crema);color:var(--texto-suave);border:2px solid var(--crema-oscuro);border-radius:var(--radio);font-size:0.82rem;font-weight:600;cursor:pointer">
+            👁 Ver
+          </button>
+        </div>
         <button class="btn-limpiar" onclick="limpiarCarrito()">✕ Limpiar orden</button>
       </div>
     </div>
@@ -1293,6 +1302,14 @@ const STORAGE_PRODUCTOS = 'casaroll_productos';
 const STORAGE_VENTAS = 'casaroll_ventas';
 const STORAGE_FOLIO = 'casaroll_ultimo_folio';
 
+// ── REDONDEO GLOBAL — siempre 2 decimales ──
+function redondear(n) { return Math.round(n * 100) / 100; }
+function fmt(n) {
+  // Formatea número: si es entero muestra sin decimales, si tiene fracción muestra 2
+  const r = redondear(n);
+  return Number.isInteger(r) ? String(r) : r.toFixed(2);
+}
+
 // ── SUPABASE CONFIG ──
 const SB_URL = 'https://ibyfeknrcxesjvrahjqx.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieWZla25yY3hlc2p2cmFoanF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NzA3MDAsImV4cCI6MjA5NzU0NjcwMH0.oRnwZuee_OnkMlVV9TCa0W2jJvDeK9GsxOHrJoca87M';
@@ -1393,10 +1410,10 @@ function aplicarDescuento() {
   const subtotal = carrito.reduce((s, i) => s + i.precio * i.qty, 0);
   if (descTipo === 'pct') {
     if (val > 100) { showToast('⚠️ El porcentaje no puede superar 100%', true); return; }
-    descValor = Math.round(subtotal * val / 100);
+    descValor = redondear(subtotal * val / 100);
   } else {
     if (val > subtotal) { showToast('⚠️ El descuento no puede superar el total', true); return; }
-    descValor = val;
+    descValor = redondear(val);
   }
   renderCart();
 }
@@ -1443,9 +1460,9 @@ async function init() {
       const faltantes = ventasLocal.filter(v => !idsNube.has(String(v.id)));
       for (const v of faltantes) { await saveVentaNube(v); }
       ventas = ventasNube.map(v => ({
-        id: v.id, fecha: v.fecha, hora: v.hora, fechaISO: v.fecha_iso,
-        items: v.items, subtotal: Number(v.subtotal), descuento: Number(v.descuento),
-        descTipo: v.desc_tipo, descPct: v.desc_pct, total: Number(v.total),
+        id: v.id, folio: v.folio, fecha: v.fecha, hora: v.hora, fechaISO: v.fecha_iso,
+        items: v.items, subtotal: redondear(Number(v.subtotal)), descuento: redondear(Number(v.descuento)),
+        descTipo: v.desc_tipo, descPct: v.desc_pct, total: redondear(Number(v.total)),
         nota: v.nota, pago: v.pago
       }));
       localStorage.setItem(STORAGE_VENTAS, JSON.stringify(ventas));
@@ -1641,8 +1658,8 @@ function renderCart() {
 
   let subtotal = 0;
   container.innerHTML = carrito.map((item, i) => {
-    const sub = item.precio * item.qty;
-    subtotal += sub;
+    const sub = redondear(item.precio * item.qty);
+    subtotal = redondear(subtotal + sub);
     return `
       <div class="cart-item">
         <div style="font-size:1.3rem">${item.icono || '🍽'}</div>
@@ -1705,8 +1722,8 @@ function limpiarCarrito() {
 }
 
 function cobrar() {
-  const subtotal = carrito.reduce((s, i) => s + i.precio * i.qty, 0);
-  const total = subtotal - descValor;
+  const subtotal = redondear(carrito.reduce((s, i) => s + i.precio * i.qty, 0));
+  const total = redondear(subtotal - descValor);
   let resumen = carrito.map(i => `${i.qty}× ${i.nombre} — $${i.precio * i.qty}`).join('<br>');
   if (descValor > 0) {
     const pct = descTipo === 'pct' ? ` (${Math.round(descValor/subtotal*100)}%)` : '';
@@ -1776,7 +1793,29 @@ function imprimirTicket() {
   const ultima = ventas[ventas.length - 1];
   if (!ultima) return;
   prepararTicket(ultima);
-  window.print();
+  // Pequeño delay para que el DOM se actualice antes de imprimir
+  setTimeout(() => window.print(), 100);
+}
+
+function verTicket() {
+  const ticket = document.getElementById('ticket-print');
+  // Mostrar ticket en modal temporal
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:12px;padding:20px;max-height:90vh;overflow-y:auto;position:relative';
+  box.innerHTML = ticket.innerHTML;
+  box.style.fontFamily = "'Courier New', monospace";
+  box.style.fontSize = '13px';
+  box.style.minWidth = '280px';
+  const btnCerrar = document.createElement('button');
+  btnCerrar.textContent = '✕ Cerrar';
+  btnCerrar.style.cssText = 'margin-top:14px;width:100%;padding:10px;background:var(--verde);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer';
+  btnCerrar.onclick = () => document.body.removeChild(overlay);
+  box.appendChild(btnCerrar);
+  overlay.appendChild(box);
+  overlay.onclick = e => { if (e.target === overlay) document.body.removeChild(overlay); };
+  document.body.appendChild(overlay);
 }
 
 async function confirmarCobro() {
@@ -1808,6 +1847,8 @@ async function confirmarCobro() {
   // Preparar ticket y habilitar botón imprimir
   prepararTicket(venta);
   document.getElementById('btn-imprimir').disabled = false;
+  const btnVer = document.getElementById('btn-ver-ticket');
+  if (btnVer) btnVer.disabled = false;
   limpiarCarrito();
   const iconos = { Efectivo: '💵', Tarjeta: '💳', Transferencia: '📲' };
   showToast(`✅ Folio ${formatFolio(folio)} — $${total} ${iconos[metodoPago]}`);
@@ -1975,18 +2016,22 @@ function initTZ() {
 }
 
 function parseHoraVenta(v) {
-  // Convierte fecha+hora de venta a objeto comparable
-  // hora viene como "HH:MM" en formato 24h o 12h
-  let hora = v.hora || '00:00';
-  // Normalizar AM/PM si existe
-  if (/AM|PM/i.test(hora)) {
-    const [time, ampm] = hora.split(' ');
+  // Normaliza hora a HH:MM 24h para comparación
+  // Maneja: "14:30", "02:30 PM", "02:30 p.m.", "2:30 p. m."
+  let hora = (v.hora || '00:00').trim();
+  // Quitar puntos de a.m./p.m. → am/pm
+  hora = hora.replace(/\.\s*/g, '').replace(/\s+/g, ' ').trim();
+  if (/am|pm/i.test(hora)) {
+    const parts = hora.split(' ');
+    const ampm = parts[parts.length - 1];
+    const time = parts[0];
     let [hh, mm] = time.split(':').map(Number);
-    if (/PM/i.test(ampm) && hh !== 12) hh += 12;
-    if (/AM/i.test(ampm) && hh === 12) hh = 0;
-    hora = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+    if (/pm/i.test(ampm) && hh !== 12) hh += 12;
+    if (/am/i.test(ampm) && hh === 12) hh = 0;
+    hora = String(hh).padStart(2,'0') + ':' + String(mm || 0).padStart(2,'0');
   }
-  return v.fechaISO + 'T' + hora;
+  const fechaISO = v.fechaISO || '';
+  return fechaISO + 'T' + hora;
 }
 
 function filtrarReporte() { renderReporte(); }
@@ -2009,9 +2054,9 @@ function renderReporte() {
   // KPI
   const total = ventasFiltered.reduce((s, v) => s + v.total, 0);
   const tickets = ventasFiltered.length;
-  document.getElementById('kpi-total').textContent = `$${total}`;
+  document.getElementById('kpi-total').textContent = '$' + fmt(total);
   document.getElementById('kpi-tickets').textContent = tickets;
-  document.getElementById('kpi-promedio').textContent = tickets ? `$${Math.round(total / tickets)}` : '$0';
+  document.getElementById('kpi-promedio').textContent = tickets ? '$' + fmt(total / tickets) : '$0';
   document.getElementById('kpi-periodo').textContent = `${desde || '—'} → ${hasta || '—'}`;
 
   // Mejor día
@@ -2021,7 +2066,7 @@ function renderReporte() {
   });
   const dias = Object.entries(porDia).sort((a, b) => b[1] - a[1]);
   document.getElementById('kpi-mejor-dia').textContent = dias.length ? dias[0][0] : '—';
-  document.getElementById('kpi-mejor-dia-monto').textContent = dias.length ? `$${dias[0][1]}` : '—';
+  document.getElementById('kpi-mejor-dia-monto').textContent = dias.length ? '$' + fmt(dias[0][1]) : '—';
 
   // Chart productos
   const porProducto = {};
@@ -2047,7 +2092,7 @@ function renderReporte() {
         <div class="bar-row">
           <div class="bar-label">${fecha}</div>
           <div class="bar-track"><div class="bar-fill" style="width:${(monto/maxDia)*100}%;background:var(--verde)"></div></div>
-          <div class="bar-val">$${monto}</div>
+          <div class="bar-val">$${fmt(monto)}</div>
         </div>`).join('')
     : '<div class="cart-empty">Sin datos</div>';
 
@@ -2056,8 +2101,8 @@ function renderReporte() {
   const ids = { Efectivo: 'efectivo', Tarjeta: 'tarjeta', Transferencia: 'transferencia' };
   metodos.forEach(m => {
     const mv = ventasFiltered.filter(v => v.pago === m);
-    const monto = mv.reduce((s, v) => s + v.total, 0);
-    document.getElementById(`kpi-${ids[m]}`).textContent = `$${monto}`;
+    const monto = redondear(mv.reduce((s, v) => s + v.total, 0));
+    document.getElementById(`kpi-${ids[m]}`).textContent = '$' + fmt(monto);
     document.getElementById(`kpi-${ids[m]}-tickets`).textContent = `${mv.length} órden${mv.length !== 1 ? 'es' : ''}`;
   });
 
@@ -2065,10 +2110,10 @@ function renderReporte() {
   const ventasConDesc = ventasFiltered.filter(v => v.descuento > 0);
   const totalDesc = ventasConDesc.reduce((s, v) => s + v.descuento, 0);
   const totalBruto = ventasFiltered.reduce((s, v) => s + (v.subtotal || v.total), 0);
-  document.getElementById('kpi-desc-total').textContent = `$${totalDesc}`;
+  document.getElementById('kpi-desc-total').textContent = '$' + fmt(totalDesc);
   document.getElementById('kpi-desc-ordenes').textContent = `${ventasConDesc.length} órden${ventasConDesc.length !== 1 ? 'es' : ''} con descuento`;
-  document.getElementById('kpi-desc-bruto').textContent = `$${totalBruto}`;
-  document.getElementById('kpi-desc-promedio').textContent = ventasConDesc.length ? `$${Math.round(totalDesc / ventasConDesc.length)}` : '$0';
+  document.getElementById('kpi-desc-bruto').textContent = '$' + fmt(totalBruto);
+  document.getElementById('kpi-desc-promedio').textContent = ventasConDesc.length ? '$' + fmt(totalDesc / ventasConDesc.length) : '$0';
 
   // Tabla
   const tbody = document.getElementById('ventas-tbody');
@@ -2090,7 +2135,7 @@ function renderReporte() {
       <td style="font-size:0.8rem;color:var(--texto-suave)">${v.nota || '—'}</td>
       <td><span class="badge-pago ${v.pago || 'Efectivo'}">${pagoIcon[v.pago] || '💵'} ${v.pago || 'Efectivo'}</span></td>
       <td>${descLabel}</td>
-      <td><strong>$${v.total}</strong></td>
+      <td><strong>$${fmt(v.total)}</strong></td>
     </tr>`;
   }).join('');
 }
@@ -2544,7 +2589,7 @@ async function guardarEdicionVenta() {
     descPct = evDescTipo === 'pct' ? val : null;
   }
 
-  const nuevoTotal = subtotal - descMonto;
+  const nuevoTotal = redondear(subtotal - descMonto);
 
   // Actualizar en memoria
   const idx = ventas.findIndex(x => x.id === editingVentaId);
@@ -2555,89 +2600,4 @@ async function guardarEdicionVenta() {
     descuento: descMonto,
     descTipo: descTipoVal,
     descPct: descPct,
-    total: nuevoTotal
-  };
-  saveVentas();
-
-  // Actualizar en Supabase
-  if (syncOnline) {
-    try {
-      await sbFetch('ventas?id=eq.' + editingVentaId, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          pago: nuevoPago,
-          nota: nuevaNota,
-          descuento: descMonto,
-          desc_tipo: descTipoVal,
-          desc_pct: descPct,
-          total: nuevoTotal
-        })
-      });
-    } catch(e) { console.warn('Error actualizando venta en nube:', e); }
-  }
-
-  closeModal('modal-editar-venta');
-  renderVentasList();
-  showToast('✅ Venta ' + (v.folio ? formatFolio(v.folio) : '') + ' actualizada');
-}
-
-// ── FORZAR SYNC MANUAL ──
-async function forzarSync() {
-  const statusEl = document.getElementById('sync-status-mant');
-  statusEl.textContent = 'Sincronizando...';
-  statusEl.style.color = 'var(--amarillo)';
-  try {
-    // Subir productos
-    const rowsProd = productos.map(p => ({
-      id: p.id, nombre: p.nombre, cat: p.cat,
-      subcat: p.subcat, precio: p.precio, icono: p.icono || ''
-    }));
-    await sbFetch('productos?on_conflict=id', {
-      method: 'POST',
-      prefer: 'resolution=merge-duplicates',
-      body: JSON.stringify(rowsProd)
-    });
-
-    // Subir ventas una por una
-    let subidas = 0;
-    for (const v of ventas) {
-      await sbFetch('ventas?on_conflict=id', {
-        method: 'POST',
-        prefer: 'resolution=merge-duplicates',
-        body: JSON.stringify([{
-          id: v.id,
-          fecha: v.fecha,
-          hora: v.hora,
-          fecha_iso: v.fechaISO,
-          items: v.items,
-          subtotal: v.subtotal || v.total,
-          descuento: v.descuento || 0,
-          desc_tipo: v.descTipo || null,
-          desc_pct: v.descPct || null,
-          total: v.total,
-          nota: v.nota || '',
-          pago: v.pago || 'Efectivo'
-        }])
-      });
-      subidas++;
-    }
-
-    setSyncStatus(true);
-    statusEl.textContent = '✅ ' + subidas + ' ventas y ' + productos.length + ' productos sincronizados';
-    statusEl.style.color = 'var(--verde)';
-    showToast('✅ Sincronización completa');
-  } catch(e) {
-    statusEl.textContent = '❌ Error: ' + e.message;
-    statusEl.style.color = 'var(--rojo)';
-    showToast('Error de sincronización', true);
-    console.error(e);
-  }
-}
-
-// ── ARRANCAR ──
-// Parchear showPage para incluir mantenimiento
-window.showPage = showPage_orig;
-checkAuth();
-</script>
-</body>
-</html>
+    total: 
