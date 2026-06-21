@@ -2916,10 +2916,10 @@ function applyPrintWidth(mm) {
     style.id = 'print-style-dynamic';
     document.head.appendChild(style);
   }
-  var useful    = mm === 58 ? '52mm'  : '76mm';
-  var ticketW   = mm === 58 ? '210px' : '300px';
-  var fontSize  = mm === 58 ? '12px'  : '14px';
-  var pageSize  = mm + 'mm';
+  var useful   = mm === 58 ? '52mm'  : '76mm';
+  var ticketW  = mm === 58 ? '210px' : '300px';
+  var base     = mm === 58 ? 16 : 18;  // px base +4 sobre original
+  var pageSize = mm + 'mm';
   var css = [
     '@media print {',
     '  * { visibility: hidden; }',
@@ -2930,12 +2930,23 @@ function applyPrintWidth(mm) {
     '    position: fixed !important;',
     '    top: 0 !important; left: 0 !important;',
     '    width: ' + useful + ' !important;',
-    '    font-size: ' + fontSize + ' !important;',
+    '    font-size: ' + base + 'px !important;',
     '    padding: 2mm 3mm !important;',
     '    margin: 0 !important;',
+    '    line-height: 1.5 !important;',
     '  }',
+    '  #ticket-print .t-logo    { font-size: ' + (base+4) + 'px !important; font-weight:900 !important; }',
+    '  #ticket-print .t-folio   { font-size: ' + (base+2) + 'px !important; font-weight:900 !important; }',
+    '  #ticket-print .t-cliente { font-size: ' + (base+2) + 'px !important; font-weight:900 !important; }',
+    '  #ticket-print .t-meta    { font-size: ' + (base-2) + 'px !important; }',
+    '  #ticket-print .t-item-row { font-size: ' + base + 'px !important; font-weight:600 !important; }',
+    '  #ticket-print .t-total-row { font-size: ' + base + 'px !important; }',
+    '  #ticket-print .t-total-final { font-size: ' + (base+4) + 'px !important; font-weight:900 !important; }',
+    '  #ticket-print .t-pago    { font-size: ' + base + 'px !important; font-weight:700 !important; }',
+    '  #ticket-print .t-nota    { font-size: ' + (base-2) + 'px !important; }',
+    '  #ticket-print .t-footer  { font-size: ' + (base-4) + 'px !important; }',
     '}',
-    '#ticket-print { width: ' + ticketW + '; font-size: ' + fontSize + '; }'
+    '#ticket-print { width: ' + ticketW + '; font-size: ' + base + 'px; }'
   ].join('\n');
   style.textContent = css;
 }
