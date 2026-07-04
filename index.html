@@ -3390,7 +3390,8 @@ let editingVentaId = null;
 let evDescTipo = 'ninguno';
 
 function abrirEdicionVenta(id) {
-  const v = ventas.find(x => x.id === id);
+  const idNum = Number(id);
+  const v = ventas.find(x => x.id === idNum || String(x.id) === String(id));
   if (!v) return;
   editingVentaId = id;
 
@@ -3444,7 +3445,8 @@ function setEvDescTipo(tipo) {
 }
 
 function actualizarEvPreview() {
-  const v = ventas.find(x => x.id === editingVentaId);
+  const _pid = Number(editingVentaId);
+  const v = ventas.find(x => x.id === _pid || String(x.id) === String(editingVentaId));
   if (!v) return;
   const subtotal = v.subtotal || v.total;
   let descMonto = 0;
@@ -3460,7 +3462,8 @@ function actualizarEvPreview() {
 }
 
 async function guardarEdicionVenta() {
-  const v = ventas.find(x => x.id === editingVentaId);
+  const idNum = Number(editingVentaId);
+  const v = ventas.find(x => x.id === idNum || String(x.id) === String(editingVentaId));
   if (!v) return;
 
   const subtotal = v.subtotal || v.total;
@@ -3479,7 +3482,8 @@ async function guardarEdicionVenta() {
   const nuevoTotal = redondear(subtotal - descMonto);
 
   // Actualizar en memoria
-  const idx = ventas.findIndex(x => x.id === editingVentaId);
+  const _geid = Number(editingVentaId);
+  const idx = ventas.findIndex(x => x.id === _geid || String(x.id) === String(editingVentaId));
   ventas[idx] = {
     ...v,
     pago: nuevoPago,
@@ -3621,7 +3625,8 @@ function initPrintConfig() {
 let cancelandoVentaId = null;
 
 function abrirCancelarVenta(id) {
-  const v = ventas.find(x => x.id === id);
+  const idNum = Number(id);
+  const v = ventas.find(x => x.id === idNum || String(x.id) === String(id));
   if (!v) return;
   cancelandoVentaId = id;
   document.getElementById('cv-folio').textContent = v.folio ? formatFolio(v.folio) : '';
@@ -3637,7 +3642,8 @@ async function confirmarCancelarVenta() {
     document.getElementById('cv-motivo').focus();
     return;
   }
-  const idx = ventas.findIndex(x => x.id === cancelandoVentaId);
+  const idNum2 = Number(cancelandoVentaId);
+  const idx = ventas.findIndex(x => x.id === idNum2 || String(x.id) === String(cancelandoVentaId));
   if (idx === -1) return;
   const v = ventas[idx];
   ventas[idx] = { ...v, cancelada: true, motivoCancelacion: motivo };
