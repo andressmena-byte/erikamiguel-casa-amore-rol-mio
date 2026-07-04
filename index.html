@@ -2003,12 +2003,15 @@ async function init() {
     const consNube = await sbFetch('consecutivo?id=eq.1&select=ultimo_folio,meta_mensual,meta_periodo');
     if (consNube && consNube.length > 0) {
       localStorage.setItem(STORAGE_FOLIO, consNube[0].ultimo_folio);
-      if (consNube[0].meta_mensual) {
-        localStorage.setItem(STORAGE_META, consNube[0].meta_mensual);
-      }
-      if (consNube[0].meta_periodo) {
-        localStorage.setItem(STORAGE_META_PERIODO, consNube[0].meta_periodo);
-      }
+      if (consNube[0].meta_mensual) localStorage.setItem(STORAGE_META, consNube[0].meta_mensual);
+      if (consNube[0].meta_periodo) localStorage.setItem(STORAGE_META_PERIODO, consNube[0].meta_periodo);
+    }
+
+    // Cargar configuración global
+    const configNube = await sbFetch('configuracion?id=eq.1&select=monitor_activo,combos_activo');
+    if (configNube && configNube.length > 0) {
+      localStorage.setItem(STORAGE_MONITOR, configNube[0].monitor_activo ? '1' : '0');
+      localStorage.setItem(STORAGE_COMBOS, configNube[0].combos_activo ? '1' : '0');
     }
 
     setSyncStatus(true);
@@ -3196,8 +3199,17 @@ async function sincronizarDesdeNube() {
       if (consNube[0].meta_periodo) localStorage.setItem(STORAGE_META_PERIODO, consNube[0].meta_periodo);
     }
 
+    // Cargar configuración global
+    const cfgNube = await sbFetch('configuracion?id=eq.1&select=monitor_activo,combos_activo');
+    if (cfgNube && cfgNube.length > 0) {
+      localStorage.setItem(STORAGE_MONITOR, cfgNube[0].monitor_activo ? '1' : '0');
+      localStorage.setItem(STORAGE_COMBOS, cfgNube[0].combos_activo ? '1' : '0');
+    }
+
     setSyncStatus(true);
     initReportes();
+    actualizarToggleMonitor();
+    actualizarToggleCombos();
     showToast('✅ Sincronizado con la nube');
   } catch(e) {
     console.error('Reintento falló:', e.message);
@@ -3721,13 +3733,22 @@ function combosActivos() {
   return localStorage.getItem(STORAGE_COMBOS) === '1';
 }
 
-function toggleCombosActivo() {
+async function toggleCombosActivo() {
   const activo = !combosActivos();
   localStorage.setItem(STORAGE_COMBOS, activo ? '1' : '0');
   actualizarToggleCombos();
-  // Si estaba en la tab de combos y se deshabilita, volver a bebidas
   if (!activo && currentCat === 'combos') {
     selectCat('bebidas');
+  }
+  // Guardar en Supabase
+  if (syncOnline) {
+    try {
+      await sbFetch('configuracion?id=eq.1', {
+        method: 'PATCH',
+        body: JSON.stringify({ combos_activo: activo, updated_at: new Date().toISOString() })
+      });
+      showToast(activo ? '🎁 Combos habilitados en todos los dispositivos' : '🎁 Combos deshabilitados en todos los dispositivos');
+    } catch(e) { console.warn('Error guardando config combos:', e); }
   }
 }
 
@@ -3743,21 +3764,29 @@ function actualizarToggleCombos() {
   if (btnCat) btnCat.style.display = activo ? '' : 'none';
 }
 
-function toggleMonitorActivo() {
+async function toggleMonitorActivo() {
   const activo = !monitorActivo();
   localStorage.setItem(STORAGE_MONITOR, activo ? '1' : '0');
   if (!activo) {
-    // Limpiar todos los items del monitor en Supabase
     if (syncOnline) {
       sbFetch('monitor_items?id=gt.0', { method: 'DELETE' }).catch(() => {});
     }
     monitorItems = [];
-    // Ocultar del nav
     document.getElementById('nav-monitor-wrap').style.display = 'none';
   } else {
     document.getElementById('nav-monitor-wrap').style.display = 'flex';
   }
   actualizarToggleMonitor();
+  // Guardar en Supabase
+  if (syncOnline) {
+    try {
+      await sbFetch('configuracion?id=eq.1', {
+        method: 'PATCH',
+        body: JSON.stringify({ monitor_activo: activo, updated_at: new Date().toISOString() })
+      });
+      showToast(activo ? '📺 Monitor habilitado en todos los dispositivos' : '📺 Monitor deshabilitado en todos los dispositivos');
+    } catch(e) { console.warn('Error guardando config monitor:', e); }
+  }
 }
 
 function actualizarToggleMonitor() {
