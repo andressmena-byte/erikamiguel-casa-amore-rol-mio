@@ -1867,7 +1867,14 @@ function getMonitorItemsFromVenta(venta) {
       });
     } else {
       const prod = productos.find(p => p.nombre === item.nombre);
-      const mon = prod ? (prod.monitor || 'ninguno') : 'ninguno';
+      let mon = prod ? (prod.monitor || 'ninguno') : 'ninguno';
+      // Fallback: si el producto no tiene monitor configurado, inferir por subcategoría
+      if (mon === 'ninguno' && prod) {
+        const subcat = (prod.subcat || '').toLowerCase();
+        const cat = (prod.cat || '').toLowerCase();
+        if (cat === 'bebidas') mon = 'bebidas';
+        else if (cat === 'alimentos') mon = 'alimentos';
+      }
       if (mon === 'ninguno') return;
       if (!grupos[mon]) grupos[mon] = [];
       grupos[mon].push({ nombre: item.nombre, qty: item.qty, nota });
