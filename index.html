@@ -1560,21 +1560,20 @@
     <h3>📺 Monitor de producción</h3>
     <p>Cuando está habilitado, aparece en el menú y los pedidos se envían al monitor al cobrar. Al deshabilitar, los pedidos nuevos no se encolan — los pendientes anteriores se limpian automáticamente.</p>
     <div style="display:flex;flex-direction:column;gap:14px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.95rem;font-weight:700">
-        <div style="position:relative;width:52px;height:28px" onclick="toggleMonitorActivo()">
-          <input type="checkbox" id="monitor-toggle-check" style="opacity:0;width:0;height:0;position:absolute">
-          <div id="monitor-toggle-track" style="position:absolute;inset:0;border-radius:28px;background:var(--crema-oscuro);transition:background 0.2s"></div>
-          <div id="monitor-toggle-thumb" style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:left 0.2s"></div>
+      <div style="display:flex;align-items:center;gap:12px;cursor:pointer" onclick="toggleMonitorActivo()">
+        <div style="position:relative;width:52px;height:28px;flex-shrink:0;cursor:pointer">
+          <div id="monitor-toggle-track" style="position:absolute;inset:0;border-radius:28px;background:var(--crema-oscuro);transition:background 0.2s;pointer-events:none"></div>
+          <div id="monitor-toggle-thumb" style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:left 0.2s;pointer-events:none"></div>
         </div>
-        <span id="monitor-toggle-label">Monitor deshabilitado</span>
-      </label>
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.95rem;font-weight:700">
-        <div style="position:relative;width:52px;height:28px" onclick="toggleCombosActivo()">
-          <div id="combos-toggle-track" style="position:absolute;inset:0;border-radius:28px;background:var(--crema-oscuro);transition:background 0.2s"></div>
-          <div id="combos-toggle-thumb" style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:left 0.2s"></div>
+        <span id="monitor-toggle-label" style="font-size:0.95rem;font-weight:700;pointer-events:none">Monitor deshabilitado</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;cursor:pointer" onclick="toggleCombosActivo()">
+        <div style="position:relative;width:52px;height:28px;flex-shrink:0;cursor:pointer">
+          <div id="combos-toggle-track" style="position:absolute;inset:0;border-radius:28px;background:var(--crema-oscuro);transition:background 0.2s;pointer-events:none"></div>
+          <div id="combos-toggle-thumb" style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:left 0.2s;pointer-events:none"></div>
         </div>
-        <span id="combos-toggle-label">🎁 Combos deshabilitados</span>
-      </label>
+        <span id="combos-toggle-label" style="font-size:0.95rem;font-weight:700;pointer-events:none">🎁 Combos deshabilitados</span>
+      </div>
     </div>
   </div>
 
